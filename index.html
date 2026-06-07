@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>原田式目標管理</title>
+<style>
+:root{
+  --navy:#1a3a6b; --blue:#2563c4; --blue-l:#e8f0fc; --red:#d32f2f; --red-l:#fdecea;
+  --bg:#f4f6fa; --card:#ffffff; --line:#d7dee9; --text:#1e2a3a; --sub:#5b6b80;
+  --green:#2e7d32; --green-l:#e8f5e9; --amber:#b26a00;
+  --radius:12px; --shadow:0 1px 4px rgba(20,40,80,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.55;
+  padding-bottom:env(safe-area-inset-bottom)}
+header{background:var(--navy);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:700;flex:1;min-width:160px}
+.hbtn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
+  border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.hbtn:active{background:rgba(255,255,255,.3)}
+#saveState{font-size:12px;opacity:.85}
+nav{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:2px solid var(--line);
+  display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav button{flex:1;min-width:110px;border:none;background:none;padding:13px 8px;font-size:14.5px;
+  font-weight:600;color:var(--sub);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.act{color:var(--blue);border-bottom-color:var(--blue)}
+main{max-width:1180px;margin:0 auto;padding:14px}
+.tab{display:none}.tab.act{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--navy);border-left:4px solid var(--blue);padding-left:8px}
+.card h3{font-size:13.5px;margin:12px 0 6px;color:var(--sub)}
+.hint{font-size:12px;color:var(--sub);margin:4px 0 8px}
+textarea,input[type=text],input[type=date]{width:100%;border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;font:inherit;font-size:14.5px;background:#fcfdff;color:var(--text);resize:none}
+textarea:focus,input:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>div{flex:1;min-width:140px}
+label.fl{display:block;font-size:12px;font-weight:700;color:var(--sub);margin:8px 0 3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.quad .qtitle{width:100%;border:none;background:var(--blue-l);color:var(--navy);font-weight:700;
+  font-size:13px;border-radius:8px 8px 0 0;padding:7px 10px}
+.quad textarea{border-radius:0 0 8px 8px;border-top:none}
+.zone{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.zone .ztag{flex:0 0 92px;text-align:center;font-size:12px;font-weight:700;border-radius:6px;padding:6px 4px}
+.z0 .ztag{background:#fff3e0;color:#e65100}.z1 .ztag{background:#ede7f6;color:#4527a0}
+.z2 .ztag{background:var(--green-l);color:var(--green)}.z3 .ztag{background:var(--red-l);color:var(--red)}
+.z3 input{border-color:var(--red);border-width:2px;font-weight:700}
+.listrow{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+.listrow .num{flex:0 0 26px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--sub)}
+.listrow input[type=text].small{flex:0 0 110px}
+.del{flex:0 0 32px;height:34px;border:none;background:none;color:#c63;font-size:17px;cursor:pointer;border-radius:8px}
+.del:hover{background:var(--red-l)}
+.add{border:1.5px dashed var(--blue);color:var(--blue);background:none;border-radius:8px;
+  padding:7px 14px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:2px}
+.chk{width:22px;height:22px;accent-color:var(--blue);flex:0 0 22px;margin-top:6px;cursor:pointer}
+table.an{width:100%;border-collapse:collapse}
+table.an th,table.an td{border:1px solid var(--line);padding:6px;font-size:13.5px;vertical-align:top}
+table.an th{background:var(--blue-l);color:var(--navy);font-size:12.5px;white-space:nowrap}
+table.an td:first-child{background:#f6f8fb;font-weight:700;font-size:12.5px;white-space:nowrap;width:74px}
+table.an textarea{border:none;background:transparent;padding:2px;min-height:42px}
+/* ---- OW64 ---- */
+.owbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.owbar .seg{display:flex;border:1px solid var(--blue);border-radius:8px;overflow:hidden}
+.owbar .seg button{border:none;background:#fff;color:var(--blue);padding:7px 14px;font-size:13.5px;font-weight:600;cursor:pointer}
+.owbar .seg button.act{background:var(--blue);color:#fff}
+.minimap{display:grid;grid-template-columns:repeat(3,30px);grid-template-rows:repeat(3,30px);gap:3px;margin-left:auto}
+.minimap button{border:1px solid var(--line);border-radius:5px;background:#fff;cursor:pointer;font-size:10px;color:var(--sub)}
+.minimap button.cur{background:var(--blue);color:#fff;border-color:var(--blue)}
+.minimap button.cen{border-color:var(--red)}
+.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.grid9{display:grid;grid-template-columns:repeat(9,minmax(86px,1fr));gap:3px;min-width:820px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.cell{background:#fff;border:1px solid var(--line);border-radius:6px;padding:5px 6px;min-height:62px;
+  font-size:11px;line-height:1.4;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  text-align:center;word-break:break-word;white-space:pre-wrap}
+.grid3 .cell{min-height:88px;font-size:13.5px;padding:8px}
+.cell:hover{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-l)}
+.cell.ro{cursor:default}
+.cell.ro:hover{box-shadow:none}
+.cell.theme{background:var(--blue);color:#fff;font-weight:700;border-color:var(--blue)}
+.cell.goal{background:var(--red);color:#fff;font-weight:700;border-color:var(--red)}
+.cell.empty{color:#b8c2d0;font-style:italic}
+.blkhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.blkhead .bname{font-weight:700;color:var(--navy);flex:1;text-align:center;font-size:14px}
+.blkhead button{border:1px solid var(--line);background:#fff;border-radius:8px;width:38px;height:34px;font-size:15px;cursor:pointer}
+/* ---- weekly ---- */
+.wknav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.wknav .wlabel{font-weight:700;color:var(--navy);font-size:15px;min-width:200px;text-align:center}
+.wknav button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;font-size:14px;cursor:pointer}
+.wknav button.today{color:var(--blue);border-color:var(--blue);font-weight:600}
+.progress{height:14px;background:#e3e9f2;border-radius:7px;overflow:hidden;margin:6px 0 2px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--blue),#4caf7d);border-radius:7px;transition:width .3s}
+.pct{font-size:13px;font-weight:700;color:var(--navy);text-align:right}
+.wtable{width:100%;border-collapse:collapse}
+.wtable th,.wtable td{border:1px solid var(--line);padding:4px;text-align:center;font-size:12px}
+.wtable th{background:var(--blue-l);color:var(--navy);padding:6px 4px}
+.wtable td.rt{text-align:left;font-size:12.5px;padding:6px 8px;min-width:130px}
+.wtable td .rsum{color:var(--sub);font-size:11px}
+.daybtn{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:#fff;
+  cursor:pointer;font-size:13px;color:#b8c2d0;line-height:1}
+.daybtn.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.daybtn.fut{opacity:.45}
+td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
+.ddone{text-decoration:line-through;color:var(--sub)}
+/* ---- goal images ---- */
+.gimgs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.gimg{position:relative}
+.gimg img{height:96px;border-radius:8px;border:1px solid var(--line);display:block;cursor:zoom-in}
+.gimg .gx{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;
+  border:none;background:var(--red);color:#fff;font-size:13px;cursor:pointer;line-height:1;box-shadow:var(--shadow)}
+#lightbox{position:fixed;inset:0;background:rgba(10,15,25,.88);display:none;
+  align-items:center;justify-content:center;z-index:300;cursor:zoom-out}
+#lightbox.show{display:flex}
+#lightbox img{max-width:94vw;max-height:92vh;border-radius:6px}
+/* ---- modal ---- */
+#modalBg{position:fixed;inset:0;background:rgba(15,25,45,.45);display:none;z-index:100;
+  align-items:flex-end;justify-content:center}
+#modalBg.show{display:flex}
+@media(min-width:700px){#modalBg{align-items:center}}
+#modal{background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:560px;padding:16px;box-shadow:0 -4px 30px rgba(0,0,0,.2)}
+@media(min-width:700px){#modal{border-radius:14px}}
+#modal h3{margin:0 0 10px;font-size:14px;color:var(--navy)}
+#modal textarea{min-height:110px;font-size:16px}
+#modal .mbtns{display:flex;gap:10px;margin-top:12px}
+#modal .mbtns button{flex:1;padding:11px;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff}
+#modal .mbtns .pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
+  padding:9px 20px;border-radius:20px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
+@media print{nav,header .hbtn,#saveState{display:none}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <h1>原田式目標管理</h1>
+  <span id="saveState"></span>
+  <button class="hbtn" onclick="exportJSON()">書き出し</button>
+  <button class="hbtn" onclick="document.getElementById('impFile').click()">読み込み</button>
+  <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(event)">
+</header>
+
+<nav>
+  <button id="tb-sheet" onclick="showTab('sheet')">📝 長期目標シート</button>
+  <button id="tb-ow" onclick="showTab('ow')">🎯 OW64</button>
+</nav>
+
+<main>
+  <section id="tab-sheet" class="tab"></section>
+  <section id="tab-ow" class="tab"></section>
+</main>
+
+<div id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div id="modal">
+    <h3 id="modalTitle"></h3>
+    <textarea id="modalTa"></textarea>
+    <div class="mbtns">
+      <button onclick="closeModal()">キャンセル</button>
+      <button class="pri" onclick="modalSave()">保存</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div id="lightbox" onclick="this.classList.remove('show')"><img id="lightboxImg" alt=""></div>
+
+<script>
+"use strict";
+/* ================= デフォルトデータ（PDFより転記） ================= */
+const DEFAULT_DATA = {
+  meta:{name:"", writeDate:"", targetDate:"", updateDate:""},
+  service:{family:"", society:""},
+  quad:[
+    {title:"社会・他者（有形）", text:""},
+    {title:"自分（有形）", text:""},
+    {title:"社会・他者（無形）", text:""},
+    {title:"自分（無形）", text:""}
+  ],
+  goal:"",
+  goalNote:"",
+  zones:["","","",""],
+  milestones:[{date:"",text:""}],
+  routines:[{id:1,text:""}],
+  nextRoutineId:2,
+  deadlines:[{id:1,month:"",text:"",done:false}],
+  nextDeadlineId:2,
+  supports:[{who:"",what:""}],
+  analysis:{
+    rows:["心・メンタル","技・スキル","体・健康","生活"],
+    success:["","","",""],
+    failure:["","","",""],
+    problem:["","","",""],
+    solution:["","","",""]
+  },
+  ow:{
+    goal:"",
+    themes:["","","","","","","",""],
+    actions:[
+      ["","","","","","","",""],["","","","","","","",""],
+      ["","","","","","","",""],["","","","","","","",""],
+      ["","","","","","","",""],["","","","","","","",""],
+      ["","","","","","","",""],["","","","","","","",""]
+    ]
+  },
+  goalImages:[],
+  weekly:{}
+};
+
+/* ================= 状態管理 ================= */
+const LS_KEY="haradaApp_v1";
+let D;
+try{ D = JSON.parse(localStorage.getItem(LS_KEY)) || structuredClone(DEFAULT_DATA); }
+catch(e){ D = structuredClone(DEFAULT_DATA); }
+if(!Array.isArray(D.goalImages)) D.goalImages=[]; // 旧データ互換
+if(!Array.isArray(D.supports)) D.supports=[{who:"",what:""}];
+
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  document.getElementById("saveState").textContent="保存中…";
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(D));
+      document.getElementById("saveState").textContent="✓ 保存済み";
+    }catch(e){
+      document.getElementById("saveState").textContent="⚠ 保存失敗";
+    }
+  },400);
+}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1800);
+}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function fit(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+function fitAll(root){root.querySelectorAll("textarea").forEach(fit);}
+
+/* ================= タブ ================= */
+function showTab(name){
+  document.querySelectorAll(".tab").forEach(s=>s.classList.remove("act"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("act"));
+  document.getElementById("tab-"+name).classList.add("act");
+  document.getElementById("tb-"+name).classList.add("act");
+  if(name==="sheet") renderSheet();
+  if(name==="ow") renderOW();
+  window.scrollTo(0,0);
+}
+
+/* ================= 長期目標シート ================= */
+function ta(value,oninput,attrs){
+  return `<textarea rows="1" ${attrs||""} data-oi="${oninput}">${esc(value)}</textarea>`;
+}
+function renderSheet(){
+  const root=document.getElementById("tab-sheet");
+  const a=D.analysis;
+  root.innerHTML=`
+  <div style="text-align:right;margin-bottom:10px">
+    <button class="add" onclick="printSheet()">🖨 A4印刷 / PDF出力</button>
+  </div>
+  <div class="card">
+    <h2>基本情報</h2>
+    <div class="row">
+      <div><label class="fl">氏名</label><input type="text" data-oi="meta.name" value="${esc(D.meta.name)}"></div>
+      <div><label class="fl">記入日（やると決めた日）</label><input type="text" data-oi="meta.writeDate" value="${esc(D.meta.writeDate)}"></div>
+      <div><label class="fl">目標達成日</label><input type="text" data-oi="meta.targetDate" value="${esc(D.meta.targetDate)}"></div>
+      <div><label class="fl">更新日</label><input type="text" data-oi="meta.updateDate" value="${esc(D.meta.updateDate)}"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>奉仕活動</h2>
+    <label class="fl">家族</label>${ta(D.service.family,"service.family")}
+    <label class="fl">社会</label>${ta(D.service.society,"service.society")}
+  </div>
+  <div class="card">
+    <h2>目的・目標の4観点</h2>
+    <p class="hint">タイトルも編集できます</p>
+    <div class="grid2">
+      ${D.quad.map((q,i)=>`<div class="quad">
+        <input type="text" class="qtitle" data-oi="quad.${i}.title" value="${esc(q.title)}">
+        ${ta(q.text,`quad.${i}.text`)}
+      </div>`).join("")}
+    </div>
+  </div>
+  <div class="card">
+    <h2>達成目標</h2>
+    ${ta(D.goal,"goal",'style="font-weight:700;border:2px solid var(--red);background:var(--red-l)"')}
+    <label class="fl">ご褒美・補足</label>
+    ${ta(D.goalNote,"goalNote")}
+    <div class="gimgs">${D.goalImages.map((src,i)=>`
+      <div class="gimg"><img src="${src}" data-gzoom="${i}" alt="目標イメージ${i+1}">
+      <button class="gx" data-act="delImg" data-i="${i}" title="削除">✕</button></div>`).join("")}
+    </div>
+    <button class="add" onclick="document.getElementById('goalImgFile').click()" style="margin-top:10px">＋ 画像を追加</button>
+    <input type="file" id="goalImgFile" accept="image/*" multiple style="display:none">
+  </div>
+  <div class="card">
+    <h2>ゾーン目標</h2>
+    ${["最高の目標","中間の目標","絶対できる目標","今回の目標"].map((z,i)=>`
+      <div class="zone z${i}"><span class="ztag">${z}</span>
+      <input type="text" data-oi="zones.${i}" value="${esc(D.zones[i])}"></div>`).join("")}
+  </div>
+  <div class="card">
+    <h2>経過目標</h2>
+    <div id="msList">
+    ${D.milestones.map((m,i)=>`<div class="listrow">
+      <input type="text" class="small" placeholder="期日" data-oi="milestones.${i}.date" value="${esc(m.date)}">
+      ${ta(m.text,`milestones.${i}.text`,'placeholder="内容"')}
+      <button class="del" data-act="delMs" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    </div>
+    <button class="add" data-act="addMs">＋ 経過目標を追加</button>
+  </div>
+  <div class="card">
+    <h2>ルーティン行動（重要度が高い順）</h2>
+    ${D.routines.map((r,i)=>`<div class="listrow">
+      <span class="num">${i+1}</span>
+      ${ta(r.text,`routines.${i}.text`)}
+      <button class="del" data-act="delRt" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    <button class="add" data-act="addRt">＋ ルーティンを追加</button>
+  </div>
+  <div class="card">
+    <h2>週間期日行動（発生期日順）</h2>
+    ${D.deadlines.map((dl,i)=>`<div class="listrow">
+      <input type="checkbox" class="chk" data-oi="deadlines.${i}.done" ${dl.done?"checked":""}>
+      <input type="text" class="small" placeholder="月日（例: 6/15）" data-oi="deadlines.${i}.month" value="${esc(dl.month)}">
+      ${ta(dl.text,`deadlines.${i}.text`,dl.done?'class="ddone"':"")}
+      <button class="del" data-act="delDl" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    <button class="add" data-act="addDl">＋ 期日行動を追加</button>
+  </div>
+  <div class="card">
+    <h2>目標達成のための支援</h2>
+    <div class="listrow" style="margin-bottom:2px">
+      <span class="num"></span>
+      <span class="fl" style="flex:0 0 34%;margin:0">支援者</span>
+      <span class="fl" style="flex:1;margin:0">支援内容</span>
+      <span style="flex:0 0 32px"></span>
+    </div>
+    ${D.supports.map((s,i)=>`<div class="listrow">
+      <span class="num">${i+1}</span>
+      <input type="text" style="flex:0 0 34%" placeholder="支援者" data-oi="supports.${i}.who" value="${esc(s.who)}">
+      ${ta(s.what,`supports.${i}.what`,'placeholder="支援内容"')}
+      <button class="del" data-act="delSp" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    <button class="add" data-act="addSp">＋ 支援者を追加</button>
+  </div>
+  <div class="card">
+    <h2>成功・強み／失敗・弱みの分析</h2>
+    <div class="scrollx"><table class="an">
+      <tr><th></th><th>成功・強みの分析</th><th>失敗・弱みの分析</th></tr>
+      ${a.rows.map((r,i)=>`<tr><td>${esc(r)}</td>
+        <td>${ta(a.success[i],`analysis.success.${i}`)}</td>
+        <td>${ta(a.failure[i],`analysis.failure.${i}`)}</td></tr>`).join("")}
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>予想される問題点と解決策</h2>
+    <div class="scrollx"><table class="an">
+      <tr><th></th><th>予想される問題点</th><th>解決策</th></tr>
+      ${a.rows.map((r,i)=>`<tr><td>${esc(r)}</td>
+        <td>${ta(a.problem[i],`analysis.problem.${i}`)}</td>
+        <td>${ta(a.solution[i],`analysis.solution.${i}`)}</td></tr>`).join("")}
+    </table></div>
+  </div>`;
+  bindSheet(root);
+  fitAll(root);
+}
+function setPath(path,val){
+  const keys=path.split(".");
+  let o=D;
+  for(let i=0;i<keys.length-1;i++) o=o[keys[i]];
+  o[keys[keys.length-1]]=val;
+}
+function bindSheet(root){
+  root.querySelectorAll("[data-oi]").forEach(el=>{
+    el.addEventListener("input",()=>{
+      const v = el.type==="checkbox" ? el.checked : el.value;
+      setPath(el.dataset.oi,v);
+      if(el.tagName==="TEXTAREA") fit(el);
+      save();
+      if(el.type==="checkbox") renderSheet();
+    });
+  });
+  root.querySelectorAll("[data-act]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const i=+btn.dataset.i;
+      switch(btn.dataset.act){
+        case "addMs": D.milestones.push({date:"",text:""}); break;
+        case "delMs": if(confirm("この経過目標を削除しますか？")) D.milestones.splice(i,1); else return; break;
+        case "addRt": D.routines.push({id:D.nextRoutineId++,text:""}); break;
+        case "delRt": if(confirm("このルーティンを削除しますか？（過去のチェック履歴も非表示になります）")) D.routines.splice(i,1); else return; break;
+        case "addDl": D.deadlines.push({id:D.nextDeadlineId++,month:"",text:"",done:false}); break;
+        case "delDl": if(confirm("この期日行動を削除しますか？")) D.deadlines.splice(i,1); else return; break;
+        case "delImg": if(confirm("この画像を削除しますか？")) D.goalImages.splice(i,1); else return; break;
+        case "addSp": D.supports.push({who:"",what:""}); break;
+        case "delSp": if(confirm("この支援者の行を削除しますか？")) D.supports.splice(i,1); else return; break;
+      }
+      save(); renderSheet();
+    });
+  });
+  // 画像の追加・拡大
+  const gf=root.querySelector("#goalImgFile");
+  if(gf) gf.addEventListener("change",async ev=>{
+    const files=[...ev.target.files];
+    ev.target.value="";
+    for(const f of files){
+      try{
+        const url=await compressImage(f);
+        D.goalImages.push(url);
+      }catch(e){ alert("画像の読み込みに失敗しました: "+f.name); }
+    }
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(D));
+    }catch(e){
+      D.goalImages.pop();
+      alert("保存容量が足りません。画像を減らすか、他の画像を削除してください。");
+    }
+    save(); renderSheet(); toast("画像を追加しました");
+  });
+  root.querySelectorAll("[data-gzoom]").forEach(img=>{
+    img.onclick=()=>{
+      document.getElementById("lightboxImg").src=img.src;
+      document.getElementById("lightbox").classList.add("show");
+    };
+  });
+}
+// 画像をリサイズ・圧縮してdataURL化（保存容量対策）
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1000;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){ const r=Math.min(MAX/w,MAX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement("canvas");
+      cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(img.src);
+      resolve(cv.toDataURL("image/jpeg",0.82));
+    };
+    img.onerror=reject;
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+/* ================= OW64 ================= */
+const BLOCK_NAMES=["左上","上","右上","左","中心","右","左下","下","右下"];
+const THEME_OF_BLOCK={0:0,1:1,2:2,3:3,5:4,6:5,7:6,8:7}; // blockIdx -> theme index
+// 配色：ブルー（テーマ）＋赤（最終目標）の2色。実践項目は白。
+// ブロックの識別は色ではなくブロック間の余白と太枠で行う。
+const C_BLUE={s:"#2563c4",l:"#ffffff"};
+const THEME_COLORS=[C_BLUE,C_BLUE,C_BLUE,C_BLUE,C_BLUE,C_BLUE,C_BLUE,C_BLUE];
+let owMode = window.innerWidth<700 ? "block" : "all";
+let owBlock = 4;
+
+function cellInfo(blockIdx,pos){
+  // returns {type:'goal'|'theme'|'action', themeIdx, actIdx, text}
+  if(blockIdx===4){
+    if(pos===4) return {type:"goal",text:D.ow.goal};
+    return {type:"theme",themeIdx:THEME_OF_BLOCK[pos],text:D.ow.themes[THEME_OF_BLOCK[pos]]};
+  }
+  if(pos===4) return {type:"theme",themeIdx:THEME_OF_BLOCK[blockIdx],text:D.ow.themes[THEME_OF_BLOCK[blockIdx]]};
+  const ai=pos>4?pos-1:pos;
+  return {type:"action",themeIdx:THEME_OF_BLOCK[blockIdx],actIdx:ai,text:D.ow.actions[THEME_OF_BLOCK[blockIdx]][ai]};
+}
+function cellHTML(blockIdx,pos,extra){
+  const c=cellInfo(blockIdx,pos);
+  let cls, style="";
+  if(c.type==="goal"){ cls="cell goal"; }
+  else if(c.type==="theme"){
+    const col=THEME_COLORS[c.themeIdx];
+    cls="cell theme"+(blockIdx!==4?" ro":"");
+    style=`background:${col.s};border-color:${col.s};`;
+  }else{
+    cls="cell"+(c.text?"":" empty");
+  }
+  const txt = c.text || (c.type==="action" ? "（タップで入力）" : "");
+  return `<div class="${cls}" style="${style}${extra||""}" data-b="${blockIdx}" data-p="${pos}">${esc(txt)}</div>`;
+}
+function renderOW(){
+  const root=document.getElementById("tab-ow");
+  let body="";
+  if(owMode==="all"){
+    let cells="";
+    for(let R=0;R<9;R++)for(let C=0;C<9;C++){
+      const blockIdx=Math.floor(R/3)*3+Math.floor(C/3);
+      const pos=(R%3)*3+(C%3);
+      const sep=(C%3===0&&C>0?"margin-left:8px;":"")+(R%3===0&&R>0?"margin-top:8px;":"");
+      cells+=cellHTML(blockIdx,pos,sep);
+    }
+    body=`<div class="scrollx"><div class="grid9">${cells}</div></div>
+    <p class="hint">セルをタップして編集。青＝テーマ、赤＝最終目標、白＝実践項目。ブロックは余白で区切っています。</p>`;
+  }else{
+    let cells="";
+    for(let pos=0;pos<9;pos++) cells+=cellHTML(owBlock,pos);
+    const bname = owBlock===4 ? "中心ブロック（目標とテーマ）"
+      : `${BLOCK_NAMES[owBlock]}：${(D.ow.themes[THEME_OF_BLOCK[owBlock]]||"").replace(/\n/g," ")}`;
+    body=`<div class="blkhead">
+      <button data-nav="prev" title="前のブロック">◀</button>
+      <span class="bname">${esc(bname)}</span>
+      <button data-nav="next" title="次のブロック">▶</button>
+    </div>
+    <div class="grid3">${cells}</div>
+    <p class="hint">${owBlock===4?"セルをタップして編集。テーマを編集すると各ブロックの中央にも自動反映されます。ブロック移動は◀▶またはミニマップで。":"セルをタップして編集。中央のテーマはここでは編集できません（タップすると中心ブロックへ移動）。"}</p>`;
+  }
+  root.innerHTML=`<div class="card">
+    <div class="owbar">
+      <div class="seg">
+        <button id="owAll" class="${owMode==="all"?"act":""}">全体表示</button>
+        <button id="owBlk" class="${owMode==="block"?"act":""}">ブロック表示</button>
+      </div>
+      <button class="add" onclick="printOW()" style="margin-top:0">🖨 A4印刷 / PDF</button>
+      <div class="minimap">${[0,1,2,3,4,5,6,7,8].map(b=>{
+        const cur=owMode==="block"&&owBlock===b;
+        let st;
+        if(b===4) st=cur?"background:#d32f2f;border-color:#d32f2f;color:#fff":"background:#fff;border-color:#d32f2f;color:#d32f2f";
+        else st=cur?"background:#2563c4;border-color:#2563c4;color:#fff":"background:#fff;border-color:#2563c4;color:#2563c4";
+        return `<button data-mm="${b}" style="${st}">${b===4?"◎":""}</button>`;}).join("")}
+      </div>
+    </div>
+    ${body}
+  </div>`;
+  // bind
+  root.querySelector("#owAll").onclick=()=>{owMode="all";renderOW();};
+  root.querySelector("#owBlk").onclick=()=>{owMode="block";renderOW();};
+  root.querySelectorAll("[data-mm]").forEach(b=>b.onclick=()=>{owMode="block";owBlock=+b.dataset.mm;renderOW();});
+  root.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{
+    owBlock=(owBlock+(b.dataset.nav==="next"?1:8))%9; renderOW();
+  });
+  root.querySelectorAll(".cell").forEach(cell=>{
+    cell.onclick=()=>{
+      const b=+cell.dataset.b, p=+cell.dataset.p;
+      // 周辺ブロックのテーマセルは編集不可（中心ブロックでのみ編集）
+      if(b!==4 && p===4){
+        if(owMode==="block"){ owBlock=4; renderOW(); }
+        else toast("テーマは中心ブロックで編集してください");
+        return;
+      }
+      openCellEditor(b,p);
+    };
+  });
+}
+let modalCtx=null;
+function openCellEditor(b,p){
+  const c=cellInfo(b,p);
+  modalCtx={kind:"ow",b,p,type:c.type,themeIdx:c.themeIdx,actIdx:c.actIdx};
+  const title = c.type==="goal" ? "最終目標（中心）"
+    : c.type==="theme" ? "テーマ（保存すると周辺ブロックの中央にも自動反映）"
+    : "実践項目";
+  document.getElementById("modalTitle").textContent=title;
+  const taEl=document.getElementById("modalTa");
+  taEl.value=c.text||"";
+  document.getElementById("modalBg").classList.add("show");
+  setTimeout(()=>{taEl.focus();},50);
+}
+function modalSave(){
+  if(!modalCtx) return;
+  const v=document.getElementById("modalTa").value.trim();
+  if(modalCtx.kind==="ow"){
+    if(modalCtx.type==="goal") D.ow.goal=v;
+    else if(modalCtx.type==="theme") D.ow.themes[modalCtx.themeIdx]=v;
+    else D.ow.actions[modalCtx.themeIdx][modalCtx.actIdx]=v;
+    save(); renderOW();
+  }
+  closeModal();
+}
+function closeModal(){
+  document.getElementById("modalBg").classList.remove("show");
+  modalCtx=null;
+}
+
+/* ================= 印刷 / PDF出力 ================= */
+function printDoc(title, bodyHtml, css){
+  const f=document.createElement("iframe");
+  f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(f);
+  const doc=f.contentDocument;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(title)}</title>
+  <style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    color:#1e2a3a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  ${css}
+  </style></head><body>${bodyHtml}</body></html>`);
+  doc.close();
+  setTimeout(()=>{
+    f.contentWindow.focus();
+    f.contentWindow.print();
+    setTimeout(()=>f.remove(),3000);
+  },350);
+}
+function printOW(){
+  let rows="";
+  for(let R=0;R<9;R++){
+    let tds="";
+    for(let C=0;C<9;C++){
+      const blockIdx=Math.floor(R/3)*3+Math.floor(C/3);
+      const pos=(R%3)*3+(C%3);
+      const c=cellInfo(blockIdx,pos);
+      const cls=c.type==="goal"?"goal":c.type==="theme"?"theme":"";
+      const thick=[];
+      if(C%3===0)thick.push("border-left-width:2px");
+      if(C===8)thick.push("border-right-width:2px");
+      if(R%3===0)thick.push("border-top-width:2px");
+      if(R===8)thick.push("border-bottom-width:2px");
+      if(c.type==="theme") thick.push(`background:${THEME_COLORS[c.themeIdx].s}`,"color:#fff","font-weight:700");
+      else if(c.type==="action") thick.push(`background:${THEME_COLORS[c.themeIdx].l}`);
+      tds+=`<td class="${cls}" style="${thick.join(";")}">${esc(c.text||"")}</td>`;
+    }
+    rows+=`<tr>${tds}</tr>`;
+  }
+  const body=`<div class="head"><h1>原田式OW64</h1>
+    <span>${esc(D.meta.name)}　目標達成日：${esc(D.meta.targetDate)}　更新日：${esc(D.meta.updateDate)}</span></div>
+  <table>${rows}</table>`;
+  const css=`
+  @page{size:A4 landscape;margin:8mm}
+  .head{display:flex;align-items:baseline;gap:10mm;margin-bottom:2.5mm}
+  h1{font-size:13pt}
+  .head span{font-size:8.5pt;color:#445}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  td{border:.5pt solid #5a6b85;font-size:7pt;line-height:1.35;padding:1mm;
+    text-align:center;vertical-align:middle;height:19.5mm;word-break:break-word;white-space:pre-wrap}
+  td.theme{background:#2563c4;color:#fff;font-weight:700}
+  td.goal{background:#d32f2f;color:#fff;font-weight:700;font-size:8pt}`;
+  printDoc("原田式OW64", body, css);
+}
+function printSheet(){
+  const a=D.analysis;
+  const pre=s=>`<div class="pre">${esc(s)}</div>`;
+  const zoneNames=["最高の目標","中間の目標","絶対できる目標","今回の目標"];
+  const body=`
+  <div class="head"><h1>原田式長期目的・目標設定用紙</h1><span>更新日：${esc(D.meta.updateDate)}</span></div>
+  <table class="meta"><tr>
+    <th>氏名</th><td>${esc(D.meta.name)}</td>
+    <th>記入日（やると決めた日）</th><td>${esc(D.meta.writeDate)}</td>
+    <th>目標達成日</th><td>${esc(D.meta.targetDate)}</td>
+  </tr></table>
+  <div class="sec"><div class="sttl">奉仕活動</div>
+    <div class="srow"><b>（家族）</b>${esc(D.service.family)}　<b>（社会）</b>${esc(D.service.society)}</div></div>
+  <div class="sec"><div class="sttl">目的・目標の4観点</div>
+    <div class="quads">${D.quad.map(q=>`<div class="qd"><div class="qt">${esc(q.title)}</div>${pre(q.text)}</div>`).join("")}</div></div>
+  <div class="sec goalsec"><div class="sttl red">達成目標</div>
+    <div class="goal">${esc(D.goal)}</div>${pre(D.goalNote)}
+    ${D.goalImages.length?`<div class="gimgs">${D.goalImages.map(src=>`<img src="${src}">`).join("")}</div>`:""}</div>
+  <div class="sec"><div class="sttl">ゾーン目標</div>
+    <table class="ztab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])}</td></tr>`).join("")}</table></div>
+  <div class="sec"><div class="sttl">経過目標</div>
+    <div class="ms">${D.milestones.map(m=>`<div class="msbox"><div class="msd">${esc(m.date)}</div>${pre(m.text)}</div>`).join("")}</div></div>
+  <div class="cols">
+    <div class="sec"><div class="sttl">ルーティン行動（重要度が高い順）</div>
+      <ol>${D.routines.map(r=>`<li>${esc(r.text)}</li>`).join("")}</ol></div>
+    <div class="sec"><div class="sttl">週間期日行動（発生期日順）</div>
+      ${D.deadlines.map(dl=>`<div class="dl">${dl.done?"☑":"☐"} <b>${esc(dl.month)}</b> ${esc(dl.text)}</div>`).join("")}</div>
+  </div>
+  <table class="meta"><tr><th style="text-align:center">支援者</th><th style="text-align:center;background:#e8f0fc;color:#1a3a6b">支援内容</th></tr>
+    ${D.supports.map(s=>`<tr><td style="width:30%;font-weight:700">${esc(s.who)}</td><td>${esc(s.what)}</td></tr>`).join("")}</table>
+  <table class="an"><tr><th></th><th>成功・強みの分析</th><th>失敗・弱みの分析</th></tr>
+    ${a.rows.map((r,i)=>`<tr><th>${esc(r)}</th><td>${esc(a.success[i])}</td><td>${esc(a.failure[i])}</td></tr>`).join("")}</table>
+  <table class="an"><tr><th></th><th>予想される問題点</th><th>解決策</th></tr>
+    ${a.rows.map((r,i)=>`<tr><th>${esc(r)}</th><td>${esc(a.problem[i])}</td><td>${esc(a.solution[i])}</td></tr>`).join("")}</table>`;
+  const css=`
+  @page{size:A4 portrait;margin:9mm}
+  body{font-size:8pt;line-height:1.45}
+  .pre{white-space:pre-wrap;word-break:break-word}
+  .head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2mm;
+    border-bottom:2px solid #1a3a6b;padding-bottom:1mm}
+  h1{font-size:12.5pt;color:#1a3a6b}
+  .head span{font-size:8pt;color:#445}
+  .sec{border:.5pt solid #8a98ad;border-radius:1.5mm;padding:1.6mm 2mm;margin-bottom:1.8mm;
+    break-inside:avoid;page-break-inside:avoid}
+  .sttl{font-weight:700;font-size:8pt;color:#1a3a6b;background:#e8f0fc;
+    margin:-1.6mm -2mm 1.2mm;padding:1mm 2mm;border-radius:1.5mm 1.5mm 0 0}
+  .sttl.red{background:#fdecea;color:#b71c1c}
+  .srow b{color:#1a3a6b}
+  table{border-collapse:collapse;width:100%}
+  .meta{margin-bottom:1.8mm}
+  .meta th,.meta td{border:.5pt solid #8a98ad;padding:1mm 1.6mm;font-size:8pt;text-align:left}
+  .meta th{background:#e8f0fc;color:#1a3a6b;white-space:nowrap;width:1%}
+  .quads{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm}
+  .qd{border:.5pt solid #8a98ad;border-radius:1mm;font-size:7pt;line-height:1.4}
+  .qd .pre{padding:1mm 1.5mm}
+  .qt{background:#2563c4;color:#fff;font-weight:700;font-size:7.5pt;padding:.7mm 1.5mm;border-radius:1mm 1mm 0 0}
+  .goalsec{border:1.2pt solid #d32f2f}
+  .goal{font-size:10pt;font-weight:700;color:#b71c1c;margin-bottom:1mm}
+  .gimgs{display:flex;gap:2mm;flex-wrap:wrap;margin-top:1.5mm}
+  .gimgs img{height:28mm;border:.5pt solid #8a98ad;border-radius:1mm}
+  .ztab th{background:#e8f0fc;color:#1a3a6b;white-space:nowrap;width:24mm}
+  .ztab th,.ztab td{border:.5pt solid #8a98ad;padding:.8mm 1.6mm;text-align:left;font-size:8pt}
+  .ms{display:flex;gap:1.5mm;flex-wrap:wrap}
+  .msbox{flex:1;min-width:40mm;border:.5pt solid #8a98ad;border-radius:1mm;padding:1mm 1.5mm;font-size:7.5pt}
+  .msd{font-weight:700;color:#1a3a6b;border-bottom:.5pt solid #ccd5e2;margin-bottom:.6mm}
+  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:1.8mm}
+  ol{padding-left:4.5mm;font-size:7.5pt}
+  ol li{margin-bottom:.6mm}
+  .dl{font-size:8pt;margin-bottom:.8mm}
+  .dl b{color:#1a3a6b}
+  .an{margin-bottom:1.8mm;break-inside:avoid;page-break-inside:avoid}
+  .an th,.an td{border:.5pt solid #8a98ad;padding:1mm 1.5mm;font-size:7.5pt;text-align:left;vertical-align:top}
+  .an tr:first-child th{background:#e8f0fc;color:#1a3a6b;text-align:center}
+  .an tr th:first-child{background:#f3f6fa;white-space:nowrap;font-size:7.5pt}`;
+  printDoc("原田式長期目的・目標設定用紙", body, css);
+}
+
+/* ================= 入出力 ================= */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download=`原田式バックアップ_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("JSONを書き出しました");
+}
+function importJSON(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(reader.result);
+      if(!obj.ow||!obj.routines) throw new Error("形式が違います");
+      if(!confirm("現在のデータを読み込んだ内容で上書きします。よろしいですか？")) return;
+      D=obj; save();
+      showTab("sheet");
+      toast("読み込みました");
+    }catch(e){ alert("読み込みに失敗しました: "+e.message); }
+  };
+  reader.readAsText(f);
+  ev.target.value="";
+}
+
+/* ================= 起動 ================= */
+showTab("sheet");
+document.getElementById("saveState").textContent = localStorage.getItem(LS_KEY) ? "✓ 保存済み" : "";
+</script>
+</body>
+</html>
