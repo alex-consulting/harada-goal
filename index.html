@@ -237,6 +237,19 @@ function toast(msg){
   setTimeout(()=>t.classList.remove("show"),1800);
 }
 function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function toDateInput(v){
+  if(!v) return "";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m=String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if(!m) return "";
+  return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+}
+function fmtDate(v){
+  const d=toDateInput(v);
+  if(!d) return v||"";
+  const [y,mo,da]=d.split("-");
+  return `${y}.${+mo}.${+da}`;
+}
 function fit(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
 function fitAll(root){root.querySelectorAll("textarea").forEach(fit);}
 
@@ -266,9 +279,9 @@ function renderSheet(){
     <h2>基本情報</h2>
     <div class="row">
       <div><label class="fl">氏名</label><input type="text" data-oi="meta.name" value="${esc(D.meta.name)}"></div>
-      <div><label class="fl">記入日（やると決めた日）</label><input type="text" data-oi="meta.writeDate" value="${esc(D.meta.writeDate)}"></div>
-      <div><label class="fl">目標達成日</label><input type="text" data-oi="meta.targetDate" value="${esc(D.meta.targetDate)}"></div>
-      <div><label class="fl">更新日</label><input type="text" data-oi="meta.updateDate" value="${esc(D.meta.updateDate)}"></div>
+      <div><label class="fl">記入日（やると決めた日）</label><input type="date" data-oi="meta.writeDate" value="${esc(toDateInput(D.meta.writeDate))}"></div>
+      <div><label class="fl">目標達成日</label><input type="date" data-oi="meta.targetDate" value="${esc(toDateInput(D.meta.targetDate))}"></div>
+      <div><label class="fl">更新日</label><input type="date" data-oi="meta.updateDate" value="${esc(toDateInput(D.meta.updateDate))}"></div>
     </div>
   </div>
   <div class="card">
@@ -617,7 +630,7 @@ function printOW(){
     rows+=`<tr>${tds}</tr>`;
   }
   const body=`<div class="head"><h1>原田式OW64</h1>
-    <span>${esc(D.meta.name)}　目標達成日：${esc(D.meta.targetDate)}　更新日：${esc(D.meta.updateDate)}</span></div>
+    <span>${esc(D.meta.name)}　目標達成日：${esc(fmtDate(D.meta.targetDate))}　更新日：${esc(fmtDate(D.meta.updateDate))}</span></div>
   <table>${rows}</table>`;
   const css=`
   @page{size:A4 landscape;margin:8mm}
@@ -639,8 +652,8 @@ function printSheet(){
   <div class="head"><h1>原田式長期目的・目標設定用紙</h1><span>更新日：${esc(D.meta.updateDate)}</span></div>
   <table class="meta"><tr>
     <th>氏名</th><td>${esc(D.meta.name)}</td>
-    <th>記入日（やると決めた日）</th><td>${esc(D.meta.writeDate)}</td>
-    <th>目標達成日</th><td>${esc(D.meta.targetDate)}</td>
+    <th>記入日（やると決めた日）</th><td>${esc(fmtDate(D.meta.writeDate))}</td>
+    <th>目標達成日</th><td>${esc(fmtDate(D.meta.targetDate))}</td>
   </tr></table>
   <div class="sec"><div class="sttl">奉仕活動</div>
     <div class="srow"><b>（家族）</b>${esc(D.service.family)}　<b>（社会）</b>${esc(D.service.society)}</div></div>
