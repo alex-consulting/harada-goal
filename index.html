@@ -63,6 +63,18 @@ label.fl{display:block;font-size:12px;font-weight:700;color:var(--sub);margin:8p
 .subtabs{display:flex;gap:6px;margin-bottom:12px}
 .subtabs button{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:8px;padding:6px 16px;font-size:13.5px;font-weight:600;cursor:pointer}
 .subtabs button.act{background:var(--blue);color:#fff;border-color:var(--blue)}
+.msitem{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.msitem .listrow{margin-bottom:8px}
+.msprog{display:flex;align-items:center;gap:8px}
+.msprog .msplabel{font-size:12px;font-weight:700;color:var(--sub);flex:0 0 auto}
+.msprog .pctin{flex:0 0 70px;text-align:right;padding:6px 8px}
+.msprog .pctsign{font-size:13px;color:var(--sub)}
+.msprog .progress{flex:1;height:14px;background:#e3e9f2;border-radius:7px;overflow:hidden;margin:0}
+.msprog .progress>div{height:100%;background:linear-gradient(90deg,var(--blue),#4caf7d);border-radius:7px;transition:width .25s}
+.vprog{display:flex;align-items:center;gap:8px;margin-top:8px}
+.vprog .progress{flex:1;height:14px;background:#e3e9f2;border-radius:7px;overflow:hidden;margin:0}
+.vprog .progress>div{height:100%;background:linear-gradient(90deg,var(--blue),#4caf7d);border-radius:7px}
+.vprog .vpct{font-size:13px;font-weight:700;color:var(--navy);flex:0 0 auto;min-width:38px;text-align:right}
 .vdlh{font-weight:700;color:var(--sub);font-size:12px;margin:10px 0 4px}
 .del{flex:0 0 32px;height:34px;border:none;background:none;color:#c63;font-size:17px;cursor:pointer;border-radius:8px}
 .del:hover{background:var(--red-l)}
@@ -386,6 +398,54 @@ function renderSheetEdit(){
     <input type="file" id="goalImgFile" accept="image/*" multiple style="display:none">
   </div>
   <div class="card">
+    <h2>経過目標</h2>
+    <div id="msList">
+    ${D.milestones.map((m,i)=>`<div class="msitem">
+      <div class="listrow">
+        <input type="text" class="small" placeholder="期日" data-oi="milestones.${i}.date" value="${esc(m.date)}">
+        ${ta(m.text,`milestones.${i}.text`,'placeholder="内容"')}
+        <button class="del" data-act="delMs" data-i="${i}" title="削除">✕</button>
+      </div>
+      <div class="msprog">
+        <span class="msplabel">達成率</span>
+        <input type="number" class="pctin" min="0" max="100" data-oi="milestones.${i}.pct" value="${m.pct||0}">
+        <span class="pctsign">%</span>
+        <div class="progress"><div style="width:${Math.max(0,Math.min(100,m.pct||0))}%"></div></div>
+      </div>
+    </div>`).join("")}
+    </div>
+    <button class="add" data-act="addMs">＋ 経過目標を追加</button>
+  </div>
+  <div class="card">
+    <h2>週間期日行動（発生期日順）</h2>
+    <div class="subtabs">
+      <button class="${dlTab==='todo'?'act':''}" onclick="dlTab='todo';renderSheet()">未完了 (${D.deadlines.filter(d=>!d.done).length})</button>
+      <button class="${dlTab==='done'?'act':''}" onclick="dlTab='done';renderSheet()">完了 (${D.deadlines.filter(d=>d.done).length})</button>
+    </div>
+    ${D.deadlines.map((dl,i)=>({dl,i})).filter(o=>dlTab==='done'?o.dl.done:!o.dl.done).map(({dl,i})=>`<div class="listrow">
+      <input type="checkbox" class="chk" data-oi="deadlines.${i}.done" ${dl.done?"checked":""}>
+      <input type="date" class="small" data-oi="deadlines.${i}.month" value="${esc(toDateInputMD(dl.month))}">
+      ${ta(dl.text,`deadlines.${i}.text`,dl.done?'class="ddone"':"")}
+      <button class="del" data-act="delDl" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")||`<p class="hint">${dlTab==='done'?'完了した項目はまだありません':'未完了の項目はありません'}</p>`}
+    ${dlTab==='todo'?`<button class="add" data-act="addDl">＋ 期日行動を追加</button>`:""}
+  </div>
+  <div class="card">
+    <h2>ゾーン目標</h2>
+    ${["最高の目標","中間の目標","絶対できる目標","今回の目標"].map((z,i)=>`
+      <div class="zone z${i}"><span class="ztag">${z}</span>
+      <input type="text" data-oi="zones.${i}" value="${esc(D.zones[i])}"></div>`).join("")}
+  </div>
+  <div class="card">
+    <h2>ルーティン行動（重要度が高い順）</h2>
+    ${D.routines.map((r,i)=>`<div class="listrow">
+      <span class="num">${i+1}</span>
+      ${ta(r.text,`routines.${i}.text`)}
+      <button class="del" data-act="delRt" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    <button class="add" data-act="addRt">＋ ルーティンを追加</button>
+  </div>
+  <div class="card">
     <h2>目的・目標の4観点</h2>
     <p class="hint">タイトルも編集できます</p>
     <div class="grid2">
@@ -401,46 +461,6 @@ function renderSheetEdit(){
         </div>
       </div>`).join("")}
     </div>
-  </div>
-  <div class="card">
-    <h2>ゾーン目標</h2>
-    ${["最高の目標","中間の目標","絶対できる目標","今回の目標"].map((z,i)=>`
-      <div class="zone z${i}"><span class="ztag">${z}</span>
-      <input type="text" data-oi="zones.${i}" value="${esc(D.zones[i])}"></div>`).join("")}
-  </div>
-  <div class="card">
-    <h2>経過目標</h2>
-    <div id="msList">
-    ${D.milestones.map((m,i)=>`<div class="listrow">
-      <input type="text" class="small" placeholder="期日" data-oi="milestones.${i}.date" value="${esc(m.date)}">
-      ${ta(m.text,`milestones.${i}.text`,'placeholder="内容"')}
-      <button class="del" data-act="delMs" data-i="${i}" title="削除">✕</button>
-    </div>`).join("")}
-    </div>
-    <button class="add" data-act="addMs">＋ 経過目標を追加</button>
-  </div>
-  <div class="card">
-    <h2>ルーティン行動（重要度が高い順）</h2>
-    ${D.routines.map((r,i)=>`<div class="listrow">
-      <span class="num">${i+1}</span>
-      ${ta(r.text,`routines.${i}.text`)}
-      <button class="del" data-act="delRt" data-i="${i}" title="削除">✕</button>
-    </div>`).join("")}
-    <button class="add" data-act="addRt">＋ ルーティンを追加</button>
-  </div>
-  <div class="card">
-    <h2>週間期日行動（発生期日順）</h2>
-    <div class="subtabs">
-      <button class="${dlTab==='todo'?'act':''}" onclick="dlTab='todo';renderSheet()">未完了 (${D.deadlines.filter(d=>!d.done).length})</button>
-      <button class="${dlTab==='done'?'act':''}" onclick="dlTab='done';renderSheet()">完了 (${D.deadlines.filter(d=>d.done).length})</button>
-    </div>
-    ${D.deadlines.map((dl,i)=>({dl,i})).filter(o=>dlTab==='done'?o.dl.done:!o.dl.done).map(({dl,i})=>`<div class="listrow">
-      <input type="checkbox" class="chk" data-oi="deadlines.${i}.done" ${dl.done?"checked":""}>
-      <input type="date" class="small" data-oi="deadlines.${i}.month" value="${esc(toDateInputMD(dl.month))}">
-      ${ta(dl.text,`deadlines.${i}.text`,dl.done?'class="ddone"':"")}
-      <button class="del" data-act="delDl" data-i="${i}" title="削除">✕</button>
-    </div>`).join("")||`<p class="hint">${dlTab==='done'?'完了した項目はまだありません':'未完了の項目はありません'}</p>`}
-    ${dlTab==='todo'?`<button class="add" data-act="addDl">＋ 期日行動を追加</button>`:""}
   </div>
   <div class="card">
     <h2>目標達成のための支援</h2>
@@ -509,25 +529,26 @@ function renderSheetView(){
       ${D.goalNote?`<div class="vgoal-note">${nl2br(D.goalNote)}</div>`:""}
       ${D.goalImages.length?`<div class="gimgs">${D.goalImages.map((src,i)=>`<img src="${src}" data-gzoom="${i}" alt="目標イメージ">`).join("")}</div>`:""}
     </div>
-    <div class="vsec"><h3>目的・目標の4観点</h3>
-      <div class="vquads">
-        ${D.quad.map(q=>`<div class="vquad"><div class="vquad-t">${esc(q.title)}</div>
-          <ol>${q.items.filter(x=>x.trim()).map(it=>`<li>${esc(it)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol></div>`).join("")}
-      </div>
-    </div>
-    <div class="vsec"><h3>ゾーン目標</h3>
-      <table class="vtab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])||"—"}</td></tr>`).join("")}</table>
-    </div>
     <div class="vsec"><h3>経過目標</h3>
-      <div class="vms">${D.milestones.map(m=>`<div class="vmsbox"><div class="vmsd">${esc(m.date)||"—"}</div>${nl2br(m.text)}</div>`).join("")}</div>
-    </div>
-    <div class="vsec"><h3>ルーティン行動（重要度が高い順）</h3>
-      <ol class="vrt">${D.routines.filter(r=>r.text.trim()).map(r=>`<li>${esc(r.text)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol>
+      <div class="vms">${D.milestones.map(m=>`<div class="vmsbox"><div class="vmsd">${esc(m.date)||"—"}</div>${nl2br(m.text)}
+        <div class="vprog"><div class="progress"><div style="width:${Math.max(0,Math.min(100,m.pct||0))}%"></div></div><span class="vpct">${m.pct||0}%</span></div></div>`).join("")}</div>
     </div>
     <div class="vsec"><h3>週間期日行動</h3>
       ${(()=>{const todo=D.deadlines.filter(d=>!d.done&&(d.text.trim()||d.month));const done=D.deadlines.filter(d=>d.done&&(d.text.trim()||d.month));
         const blk=(arr,label)=>arr.length?`<div class="vdlh">${label}</div>${arr.map(dl=>`<div class="vdl">${dl.done?"☑":"☐"} <b>${esc(fmtMD(dl.month))}</b> ${esc(dl.text)}</div>`).join("")}`:"";
         return (blk(todo,"未完了")+blk(done,"完了"))||"<p class='vempty'>—</p>";})()}
+    </div>
+    <div class="vsec"><h3>ゾーン目標</h3>
+      <table class="vtab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])||"—"}</td></tr>`).join("")}</table>
+    </div>
+    <div class="vsec"><h3>ルーティン行動（重要度が高い順）</h3>
+      <ol class="vrt">${D.routines.filter(r=>r.text.trim()).map(r=>`<li>${esc(r.text)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol>
+    </div>
+    <div class="vsec"><h3>目的・目標の4観点</h3>
+      <div class="vquads">
+        ${D.quad.map(q=>`<div class="vquad"><div class="vquad-t">${esc(q.title)}</div>
+          <ol>${q.items.filter(x=>x.trim()).map(it=>`<li>${esc(it)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol></div>`).join("")}
+      </div>
     </div>
     <div class="vsec"><h3>目標達成のための支援</h3>
       <table class="vtab"><tr><th>支援者</th><th>支援内容</th></tr>
@@ -557,6 +578,11 @@ function bindSheet(root){
     el.addEventListener("input",()=>{
       const v = el.type==="checkbox" ? el.checked : el.value;
       setPath(el.dataset.oi,v);
+      if(el.classList.contains("pctin")){
+        const pv=Math.max(0,Math.min(100,+el.value||0));
+        const bar=el.closest(".msprog").querySelector(".progress>div");
+        if(bar) bar.style.width=pv+"%";
+      }
       if(el.tagName==="TEXTAREA") fit(el);
       save();
       if(el.type==="checkbox") renderSheet();
@@ -826,21 +852,17 @@ function printSheet(){
   </tr></table>
   <div class="sec"><div class="sttl">奉仕活動</div>
     <div class="srow"><b>（家族）</b>${esc(D.service.family)}　<b>（社会）</b>${esc(D.service.society)}</div></div>
-  <div class="sec"><div class="sttl">目的・目標の4観点</div>
-    <div class="quads">${D.quad.map(q=>`<div class="qd"><div class="qt">${esc(q.title)}</div><ol class="qol">${q.items.map(it=>`<li>${esc(it)}</li>`).join("")}</ol></div>`).join("")}</div></div>
   <div class="sec goalsec"><div class="sttl red">達成目標</div>
     <div class="goal">${esc(D.goal)}</div>${pre(D.goalNote)}
     ${D.goalImages.length?`<div class="gimgs">${D.goalImages.map(src=>`<img src="${src}">`).join("")}</div>`:""}</div>
+  <div class="sec"><div class="sttl">経過目標</div>
+    <div class="ms">${D.milestones.map(m=>`<div class="msbox"><div class="msd">${esc(m.date)}　達成${m.pct||0}%</div>${pre(m.text)}<div class="pbar"><div style="width:${Math.max(0,Math.min(100,m.pct||0))}%"></div></div></div>`).join("")}</div></div>
+  <div class="sec"><div class="sttl">週間期日行動（発生期日順）</div>
+    ${D.deadlines.map(dl=>`<div class="dl">${dl.done?"☑":"☐"} <b>${esc(fmtMD(dl.month))}</b> ${esc(dl.text)}</div>`).join("")}</div>
   <div class="sec"><div class="sttl">ゾーン目標</div>
     <table class="ztab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])}</td></tr>`).join("")}</table></div>
-  <div class="sec"><div class="sttl">経過目標</div>
-    <div class="ms">${D.milestones.map(m=>`<div class="msbox"><div class="msd">${esc(m.date)}</div>${pre(m.text)}</div>`).join("")}</div></div>
-  <div class="cols">
-    <div class="sec"><div class="sttl">ルーティン行動（重要度が高い順）</div>
-      <ol>${D.routines.map(r=>`<li>${esc(r.text)}</li>`).join("")}</ol></div>
-    <div class="sec"><div class="sttl">週間期日行動（発生期日順）</div>
-      ${D.deadlines.map(dl=>`<div class="dl">${dl.done?"☑":"☐"} <b>${esc(fmtMD(dl.month))}</b> ${esc(dl.text)}</div>`).join("")}</div>
-  </div>
+  <div class="sec"><div class="sttl">ルーティン行動（重要度が高い順）</div>
+    <ol>${D.routines.map(r=>`<li>${esc(r.text)}</li>`).join("")}</ol></div>
   <table class="meta"><tr><th style="text-align:center">支援者</th><th style="text-align:center;background:#e8f0fc;color:#1a3a6b">支援内容</th></tr>
     ${D.supports.map(s=>`<tr><td style="width:30%;font-weight:700">${esc(s.who)}</td><td>${esc(s.what)}</td></tr>`).join("")}</table>
   <table class="an"><tr><th></th><th>成功・強みの分析</th><th>失敗・弱みの分析</th></tr>
@@ -880,6 +902,8 @@ function printSheet(){
   .ms{display:flex;gap:1.5mm;flex-wrap:wrap}
   .msbox{flex:1;min-width:40mm;border:.5pt solid #8a98ad;border-radius:1mm;padding:1mm 1.5mm;font-size:7.5pt}
   .msd{font-weight:700;color:#1a3a6b;border-bottom:.5pt solid #ccd5e2;margin-bottom:.6mm}
+  .pbar{height:2.4mm;background:#e3e9f2;border-radius:1.2mm;overflow:hidden;margin-top:1mm}
+  .pbar>div{height:100%;background:#2563c4;border-radius:1.2mm}
   .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:1.8mm}
   ol{padding-left:4.5mm;font-size:7.5pt}
   ol li{margin-bottom:.6mm}
