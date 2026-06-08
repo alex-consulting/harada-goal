@@ -455,21 +455,6 @@ function renderSheetEdit(){
       : `<button class="linkbtn" onclick="dlTab='todo';renderSheet()">← 未完了の項目に戻る</button>`}
   </div>
   <div class="card">
-    <h2>ゾーン目標</h2>
-    ${["最高の目標","中間の目標","絶対できる目標","今回の目標"].map((z,i)=>`
-      <div class="zone z${i}"><span class="ztag">${z}</span>
-      <input type="text" data-oi="zones.${i}" value="${esc(D.zones[i])}"></div>`).join("")}
-  </div>
-  <div class="card">
-    <h2>ルーティン行動（重要度が高い順）</h2>
-    ${D.routines.map((r,i)=>`<div class="listrow">
-      <span class="num">${i+1}</span>
-      ${ta(r.text,`routines.${i}.text`)}
-      <button class="del" data-act="delRt" data-i="${i}" title="削除">✕</button>
-    </div>`).join("")}
-    <button class="add" data-act="addRt">＋ ルーティンを追加</button>
-  </div>
-  <div class="card">
     <h2>目的・目標の4観点</h2>
     <p class="hint">タイトルも編集できます</p>
     <div class="grid2">
@@ -485,6 +470,21 @@ function renderSheetEdit(){
         </div>
       </div>`).join("")}
     </div>
+  </div>
+  <div class="card">
+    <h2>ゾーン目標</h2>
+    ${["最高の目標","中間の目標","絶対できる目標","今回の目標"].map((z,i)=>`
+      <div class="zone z${i}"><span class="ztag">${z}</span>
+      <input type="text" data-oi="zones.${i}" value="${esc(D.zones[i])}"></div>`).join("")}
+  </div>
+  <div class="card">
+    <h2>ルーティン行動（重要度が高い順）</h2>
+    ${D.routines.map((r,i)=>`<div class="listrow">
+      <span class="num">${i+1}</span>
+      ${ta(r.text,`routines.${i}.text`)}
+      <button class="del" data-act="delRt" data-i="${i}" title="削除">✕</button>
+    </div>`).join("")}
+    <button class="add" data-act="addRt">＋ ルーティンを追加</button>
   </div>
   <div class="card">
     <h2>目標達成のための支援</h2>
@@ -564,17 +564,17 @@ function renderSheetView(){
         const toggle=dlTab==='done'?`<button class="linkbtn" onclick="dlTab='todo';renderSheet()">← 未完了の項目に戻る</button>`:(done.length?`<button class="linkbtn" onclick="dlTab='done';renderSheet()">完了済みを表示 (${done.length})</button>`:"");
         return rows+toggle;})()}
     </div>
-    <div class="vsec"><h3>ゾーン目標</h3>
-      <table class="vtab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])||"—"}</td></tr>`).join("")}</table>
-    </div>
-    <div class="vsec"><h3>ルーティン行動（重要度が高い順）</h3>
-      <ol class="vrt">${D.routines.filter(r=>r.text.trim()).map(r=>`<li>${esc(r.text)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol>
-    </div>
     <div class="vsec"><h3>目的・目標の4観点</h3>
       <div class="vquads">
         ${D.quad.map(q=>`<div class="vquad"><div class="vquad-t">${esc(q.title)}</div>
           <ol>${q.items.filter(x=>x.trim()).map(it=>`<li>${esc(it)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol></div>`).join("")}
       </div>
+    </div>
+    <div class="vsec"><h3>ゾーン目標</h3>
+      <table class="vtab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])||"—"}</td></tr>`).join("")}</table>
+    </div>
+    <div class="vsec"><h3>ルーティン行動（重要度が高い順）</h3>
+      <ol class="vrt">${D.routines.filter(r=>r.text.trim()).map(r=>`<li>${esc(r.text)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol>
     </div>
     <div class="vsec"><h3>目標達成のための支援</h3>
       <table class="vtab"><tr><th>支援者</th><th>支援内容</th></tr>
@@ -884,6 +884,8 @@ function printSheet(){
     <div class="ms">${D.milestones.map(m=>`<div class="msbox"><div class="msd">${esc(m.date)}　達成${m.pct||0}%</div>${pre(m.text)}<div class="pbar"><div style="width:${Math.max(0,Math.min(100,m.pct||0))}%"></div></div></div>`).join("")}</div></div>
   <div class="sec"><div class="sttl">週間期日行動（発生期日順）</div>
     ${D.deadlines.map(dl=>`<div class="dl">${dl.done?"☑":"☐"} <b>${esc(fmtMD(dl.month))}</b> ${esc(dl.text)}</div>`).join("")}</div>
+  <div class="sec"><div class="sttl">目的・目標の4観点</div>
+    <div class="quads">${D.quad.map(q=>`<div class="qd"><div class="qt">${esc(q.title)}</div><ol class="qol">${q.items.map(it=>`<li>${esc(it)}</li>`).join("")}</ol></div>`).join("")}</div></div>
   <div class="sec"><div class="sttl">ゾーン目標</div>
     <table class="ztab">${zoneNames.map((z,i)=>`<tr><th>${z}</th><td>${esc(D.zones[i])}</td></tr>`).join("")}</table></div>
   <div class="sec"><div class="sttl">ルーティン行動（重要度が高い順）</div>
