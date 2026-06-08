@@ -113,7 +113,13 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 .gimg{position:relative}
 .gimg img{height:96px;border-radius:8px;border:1px solid var(--line);display:block;cursor:zoom-in}
 .gimg .gx{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;
-  border:none;background:var(--red);color:#fff;font-size:13px;cursor:pointer;line-height:1;box-shadow:var(--shadow)}
+  border:none;background:var(--red);color:#fff;font-size:13px;cursor:pointer;line-height:1;box-shadow:var(--shadow);
+  opacity:0;transition:opacity .15s}
+.gimg:hover .gx,.gimg:focus-within .gx{opacity:1}
+.gadd{height:96px;min-width:96px;border:1.5px dashed var(--blue);color:var(--blue);background:none;
+  border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;text-align:center;padding:0 14px;line-height:1.4}
+.gadd:hover{background:var(--blue-l)}
 #lightbox{position:fixed;inset:0;background:rgba(10,15,25,.88);display:none;
   align-items:center;justify-content:center;z-index:300;cursor:zoom-out}
 #lightbox.show{display:flex}
@@ -297,8 +303,8 @@ function renderSheet(){
     <div class="gimgs">${D.goalImages.map((src,i)=>`
       <div class="gimg"><img src="${src}" data-gzoom="${i}" alt="目標イメージ${i+1}">
       <button class="gx" data-act="delImg" data-i="${i}" title="削除">✕</button></div>`).join("")}
+      <button class="gadd" onclick="document.getElementById('goalImgFile').click()">＋<br>画像を追加</button>
     </div>
-    <button class="add" onclick="document.getElementById('goalImgFile').click()" style="margin-top:10px">＋ 画像を追加</button>
     <input type="file" id="goalImgFile" accept="image/*" multiple style="display:none">
   </div>
   <div class="card">
