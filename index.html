@@ -297,13 +297,38 @@ if(!Array.isArray(D.goalImages)) D.goalImages=[]; // 旧データ互換
 })();
 if(!Array.isArray(D.supports)) D.supports=[{who:"",what:""}];
 
+// 画像はIndexedDB（大容量）に保存し、localStorageには入れない
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open("haradaApp",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("kv");
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+function idbSet(k,v){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction("kv","readwrite");
+    tx.objectStore("kv").put(v,k);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  }));
+}
+function idbGet(k){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction("kv","readonly");
+    const rq=tx.objectStore("kv").get(k);
+    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);
+  }));
+}
 let saveTimer=null;
 function save(){
   clearTimeout(saveTimer);
   document.getElementById("saveState").textContent="保存中…";
-  saveTimer=setTimeout(()=>{
+  saveTimer=setTimeout(async ()=>{
     try{
-      localStorage.setItem(LS_KEY, JSON.stringify(D));
+      const {goalImages, ...rest}=D;        // 画像以外をlocalStorageへ
+      localStorage.setItem(LS_KEY, JSON.stringify(rest));
+      await idbSet("goalImages", D.goalImages||[]); // 画像はIndexedDBへ
       document.getElementById("saveState").textContent="✓ 保存済み";
     }catch(e){
       document.getElementById("saveState").textContent="⚠ 保存失敗";
@@ -624,10 +649,9 @@ function bindSheet(root){
       }catch(e){ alert("画像の読み込みに失敗しました: "+f.name); }
     }
     try{
-      localStorage.setItem(LS_KEY, JSON.stringify(D));
+      await idbSet("goalImages", D.goalImages);
     }catch(e){
-      D.goalImages.pop();
-      alert("保存容量が足りません。画像を減らすか、他の画像を削除してください。");
+      alert("画像の保存に失敗しました。");
     }
     save(); renderSheet(); toast("画像を追加しました");
   });
@@ -643,14 +667,14 @@ function compressImage(file){
   return new Promise((resolve,reject)=>{
     const img=new Image();
     img.onload=()=>{
-      const MAX=1000;
+      const MAX=1280;
       let w=img.width,h=img.height;
       if(w>MAX||h>MAX){ const r=Math.min(MAX/w,MAX/h); w=Math.round(w*r); h=Math.round(h*r); }
       const cv=document.createElement("canvas");
       cv.width=w; cv.height=h;
       cv.getContext("2d").drawImage(img,0,0,w,h);
       URL.revokeObjectURL(img.src);
-      resolve(cv.toDataURL("image/jpeg",0.82));
+      resolve(cv.toDataURL("image/jpeg",0.85));
     };
     img.onerror=reject;
     img.src=URL.createObjectURL(file);
@@ -947,6 +971,19 @@ function importJSON(ev){
 /* ================= 起動 ================= */
 showTab("sheet");
 document.getElementById("saveState").textContent = localStorage.getItem(LS_KEY) ? "✓ 保存済み" : "";
+// 画像をIndexedDBから読み込み（localStorageの容量制限を回避）
+(async function(){
+  try{
+    const imgs=await idbGet("goalImages");
+    if(Array.isArray(imgs)&&imgs.length){
+      D.goalImages=imgs;
+      if(document.getElementById("tab-sheet").classList.contains("act")) renderSheet();
+    }else if(D.goalImages&&D.goalImages.length){
+      await idbSet("goalImages", D.goalImages); // 旧localStorage画像をIDBへ移行
+    }
+  }catch(e){}
+  try{ const {goalImages, ...rest}=D; localStorage.setItem(LS_KEY, JSON.stringify(rest)); }catch(e){}
+})();
 </script>
 </body>
 </html>
