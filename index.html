@@ -304,10 +304,11 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 .tl-wrap{display:flex;flex-direction:column;gap:0;padding:4px 0}
 .tl-row{display:flex;align-items:flex-start;gap:12px;min-height:48px}
 .tl-row.tl-has-cards{margin-bottom:4px}
-.tl-label{width:44px;flex:0 0 44px;padding-top:14px;font-size:12px;font-weight:700;color:var(--sub);text-align:right;white-space:nowrap}
+.tl-label{width:44px;flex:0 0 44px;padding-top:12px;font-size:12px;font-weight:700;color:var(--sub);text-align:right;white-space:nowrap}
 .tl-label.tl-unscheduled{color:var(--navy);font-size:11px}
 .tl-right{flex:1;display:flex;flex-direction:column;gap:0}
-.tl-line{border:none;border-top:1px solid var(--line);margin:14px 0 0 0;flex:none;width:100%}
+.tl-line{display:block;height:1px;background:#b0bbcc;margin-top:14px;flex:none;width:100%}
+.tl-line.tl-dashed{background:none;border-top:2px dashed #b0bbcc;height:0}
 .tl-cards{display:flex;flex-direction:column;gap:6px;padding:6px 0 6px 0}
 .tl-empty{height:32px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
@@ -1343,7 +1344,7 @@ function renderTodayTimeline(tasks){
     return `<div class="tl-row${items.length?' tl-has-cards':''}">
       <div class="tl-label">${String(h).padStart(2,'0')}:00</div>
       <div class="tl-right">
-        <hr class="tl-line">
+        <span class="tl-line"></span>
         ${items.length?`<div class="tl-cards">${items.map(gtdCard).join('')}</div>`:'<div class="tl-empty"></div>'}
       </div>
     </div>`;
@@ -1353,7 +1354,7 @@ function renderTodayTimeline(tasks){
     <div class="tl-row tl-has-cards" style="margin-bottom:12px">
       <div class="tl-label tl-unscheduled">時刻<br>未定</div>
       <div class="tl-right">
-        <hr class="tl-line" style="border-top:2px dashed var(--line)">
+        <span class="tl-line tl-dashed"></span>
         <div class="tl-cards">${noTime.map(gtdCard).join('')}</div>
       </div>
     </div>`:'';
