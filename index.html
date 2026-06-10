@@ -302,6 +302,21 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 .gm-btns .gm-save{background:var(--blue);color:#fff;border-color:var(--blue)}
 .kmeta-dl,.kmeta-dur{font-size:11px;color:var(--sub);background:#f0f2f6;border-radius:10px;padding:2px 7px;white-space:nowrap}
 .kmeta-dl.overdue{background:#fdecea;color:var(--red)}
+.ri-list{margin-top:7px;padding:6px 8px 4px;background:#f0f7f0;border-radius:6px;border:1px solid #c8e6c9}
+.ri-item{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:13px;line-height:1.4}
+.ri-check{flex:0 0 auto;cursor:pointer;width:15px;height:15px}
+.ri-text{flex:1}
+.ri-done{text-decoration:line-through;color:var(--sub);opacity:.7}
+.ri-progress{font-size:11px;color:var(--sub);margin-top:4px;text-align:right}
+.gm-routine-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;color:var(--navy);padding:4px 0}
+.gm-routine-area{margin-top:6px;padding:8px;background:#f0f7f0;border:1px solid #c8e6c9;border-radius:8px}
+.gm-ri-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #ddd;font-size:13px}
+.gm-ri-row:last-child{border-bottom:none}
+.gm-ri-del{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 3px;flex:0 0 auto;line-height:1}
+.gm-ri-del:hover{color:var(--red)}
+.gm-routine-addrow{display:flex;gap:6px;margin-top:8px}
+.gm-routine-addrow input{flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:#fff}
+.gm-routine-addrow button{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;white-space:nowrap}
 .kcard{cursor:default}
 /* ---- Today timeline ---- */
 /* ---- Today timeline ---- */
@@ -407,6 +422,20 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
     </div>
     <p class="gm-label">カテゴリ</p>
     <div id="gmCats" class="gm-dur"></div>
+    <p class="gm-label">
+      <label class="gm-routine-toggle">
+        <input type="checkbox" id="gmIsRoutine" onchange="toggleGmRoutineArea()">
+        🔁 ルーティンタスク（サブタスク管理）
+      </label>
+    </p>
+    <div id="gmRoutineArea" style="display:none">
+      <div id="gmRoutineList"></div>
+      <div class="gm-routine-addrow">
+        <input type="text" id="gmRoutineInput" placeholder="サブタスクを追加..."
+          onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();gmAddRoutineItem();}">
+        <button onclick="gmAddRoutineItem()">追加</button>
+      </div>
+    </div>
     <p class="gm-label">メモ</p>
     <textarea id="gmMemo" rows="4" placeholder="メモを入力..."></textarea>
     <div class="gm-btns">
@@ -515,6 +544,10 @@ if(!Array.isArray(D.goalImages)) D.goalImages=[]; // 旧データ互換
 if(!D.gtd||!Array.isArray(D.gtd.tasks)) D.gtd={tasks:[],nextId:1}; // GTDタスク（PC版）
 if(!Array.isArray(D.gtd.projects)) D.gtd.projects=[];
 if(!Array.isArray(D.gtd.categories)) D.gtd.categories=[];
+D.gtd.tasks.forEach(function(t){
+  if(t.isRoutine===undefined) t.isRoutine=false;
+  if(!Array.isArray(t.routineItems)) t.routineItems=[];
+});
 D.gtd.tasks.forEach(function(t){
   if(t.context!==undefined){ if(!t.category) t.category=t.context; delete t.context; } // 文脈→カテゴリ移行
   t.status="inbox"; // 受信トレイのみに移行
@@ -1068,6 +1101,31 @@ function updateGmQuadLabel(){
   el.className=`q${q}`;
 }
 let gtdModalId=null;
+let gmRoutineItems=[];
+function toggleGmRoutineArea(){
+  const on=document.getElementById('gmIsRoutine').checked;
+  document.getElementById('gmRoutineArea').style.display=on?'block':'none';
+}
+function gmRenderRoutineItems(){
+  const c=document.getElementById('gmRoutineList');
+  if(!c) return;
+  if(!gmRoutineItems.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:4px 0">サブタスクがありません</div>';return;}
+  c.innerHTML=gmRoutineItems.map(it=>`
+    <div class="gm-ri-row">
+      <span style="flex:1;min-width:0">${esc(it.text)}</span>
+      <button class="gm-ri-del" onclick="gmDelRoutineItem('${it.id}')">✕</button>
+    </div>`).join('');
+}
+function gmAddRoutineItem(){
+  const inp=document.getElementById('gmRoutineInput');
+  const v=(inp.value||'').trim(); if(!v) return;
+  gmRoutineItems.push({id:Date.now()+''+Math.floor(Math.random()*1000),text:v,done:false});
+  inp.value=''; gmRenderRoutineItems(); inp.focus();
+}
+function gmDelRoutineItem(id){
+  gmRoutineItems=gmRoutineItems.filter(it=>String(it.id)!==String(id));
+  gmRenderRoutineItems();
+}
 function openGtdModal(id){
   const t=gtdTask(id); if(!t) return;
   gtdModalId=id;
@@ -1103,6 +1161,11 @@ function openGtdModal(id){
       if(!already) b.classList.add("act");
     };
   });
+  // ルーティンタスク
+  document.getElementById('gmIsRoutine').checked=!!(t.isRoutine);
+  gmRoutineItems=JSON.parse(JSON.stringify(t.routineItems||[]));
+  document.getElementById('gmRoutineArea').style.display=t.isRoutine?'block':'none';
+  gmRenderRoutineItems();
   document.getElementById("gtdModalBg").classList.add("show");
   setTimeout(()=>document.getElementById("gmText").focus(),50);
 }
@@ -1119,6 +1182,8 @@ function saveGtdModal(){
   t.categories=[...document.querySelectorAll("#gmCats [data-gcat].act")].map(b=>b.dataset.gcat);
   t.urgent=document.getElementById("gmUrgent").checked;
   t.important=document.getElementById("gmImportant").checked;
+  t.isRoutine=document.getElementById('gmIsRoutine').checked;
+  t.routineItems=t.isRoutine?JSON.parse(JSON.stringify(gmRoutineItems)):[];
   save(); renderGTD();
   closeGtdModal();
 }
@@ -1276,7 +1341,9 @@ function gtdVisible(){
     if(!gtdFilter.type) return true;
     if(gtdFilter.type==='project') return (t.project||"")===gtdFilter.value;
     if(gtdFilter.type==='category') return (t.categories||[]).includes(gtdFilter.value);
-    if(gtdFilter.type==='recur') return gtdFilter.value ? (t.recur||"")=== gtdFilter.value : !!(t.recur);
+    if(gtdFilter.type==='recur') return gtdFilter.value
+      ? (t.isRoutine&&(t.recur||"")===gtdFilter.value)
+      : !!(t.isRoutine);
     return true;
   });
 }
@@ -1320,6 +1387,14 @@ function gtdCard(t){
       ${t.project?`<span class="ktag kproj-disp">📁 ${esc(t.project)}</span>`:''}
       <div class="kcat-picker">${catTags}</div>
     </div>
+    ${(t.isRoutine&&t.routineItems&&t.routineItems.length)?`
+    <div class="ri-list">
+      ${t.routineItems.map(it=>`<div class="ri-item">
+        <input type="checkbox" class="ri-check" data-tid="${t.id}" data-iid="${it.id}" ${it.done?'checked':''}>
+        <span class="ri-text${it.done?' ri-done':''}">${esc(it.text)}</span>
+      </div>`).join('')}
+      <div class="ri-progress">${t.routineItems.filter(i=>i.done).length}/${t.routineItems.length} 完了</div>
+    </div>`:''}
   </div>`;
 }
 function gtdFolderItems(type){
@@ -1416,9 +1491,9 @@ function renderGTD(){
           <span><span class="gf-arrow">▾</span>🔁 ルーティン</span>
         </div>
         <div class="gf-items">
-          <div class="gf-item ${gtdFilter.type==='recur'&&!gtdFilter.value&&gtdView!=='today'?'act':''}" data-f="recur" data-v="">すべて <span class="gf-cnt">${D.gtd.tasks.filter(t=>!!t.recur&&!t.done).length||''}</span></div>
-          ${Object.entries(GTD_RECUR_LABEL).filter(([k])=>D.gtd.tasks.some(t=>t.recur===k&&!t.done)).map(([k,label])=>`
-          <div class="gf-item ${gtdFilter.type==='recur'&&gtdFilter.value===k&&gtdView!=='today'?'act':''}" data-f="recur" data-v="${k}">${label} <span class="gf-cnt">${D.gtd.tasks.filter(t=>t.recur===k&&!t.done).length}</span></div>`).join('')}
+          <div class="gf-item ${gtdFilter.type==='recur'&&!gtdFilter.value&&gtdView!=='today'?'act':''}" data-f="recur" data-v="">すべて <span class="gf-cnt">${D.gtd.tasks.filter(t=>t.isRoutine&&!t.done).length||''}</span></div>
+          ${Object.entries(GTD_RECUR_LABEL).filter(([k])=>D.gtd.tasks.some(t=>t.isRoutine&&t.recur===k&&!t.done)).map(([k,label])=>`
+          <div class="gf-item ${gtdFilter.type==='recur'&&gtdFilter.value===k&&gtdView!=='today'?'act':''}" data-f="recur" data-v="${k}">${label} <span class="gf-cnt">${D.gtd.tasks.filter(t=>t.isRoutine&&t.recur===k&&!t.done).length}</span></div>`).join('')}
         </div>
       </div>
       <div class="gf-section ${gtdCollapsed.category?'gf-collapsed':''}">
@@ -1474,6 +1549,15 @@ function bindGTD(root){
       save(); renderGTD();
     };
     el.addEventListener("change",handler);
+  });
+  // ルーティンサブタスクのチェック
+  root.querySelectorAll(".ri-check").forEach(cb=>{
+    cb.addEventListener("change",e=>{
+      e.stopPropagation();
+      const t=gtdTask(cb.dataset.tid); if(!t) return;
+      const it=(t.routineItems||[]).find(x=>String(x.id)===String(cb.dataset.iid));
+      if(it){it.done=cb.checked; save(); renderGTD();}
+    });
   });
   // 完了チェックボックス
   root.querySelectorAll(".kcheck").forEach(cb=>{
