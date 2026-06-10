@@ -2077,7 +2077,8 @@ function renderGTD(){
         : `<div class="kcol" style="width:100%;max-width:100%">
             <div class="kbody" data-col="inbox">
               ${[...vis].sort((a,b)=>{
-                if(a.done!==b.done) return (a.done?1:0)-(b.done?1:0);
+                const ad=a.done?1:0, bd=b.done?1:0;
+                if(ad!==bd) return ad-bd;
                 const aKey=(a.deadline||'9999-99-99')+'T'+(a.deadlineTime||'99:99');
                 const bKey=(b.deadline||'9999-99-99')+'T'+(b.deadlineTime||'99:99');
                 return aKey<bKey?-1:aKey>bKey?1:0;
