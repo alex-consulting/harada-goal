@@ -1465,7 +1465,7 @@ function gtdAdd(){
 }
 function bindGTD(root){
   const cap=root.querySelector("#gtdCapture");
-  cap.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); gtdAdd(); }});
+  cap.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); gtdAdd(); }});
   root.querySelectorAll("[data-gtd]").forEach(el=>{
     const handler=()=>{
       const dot=el.dataset.gtd.indexOf(".");
