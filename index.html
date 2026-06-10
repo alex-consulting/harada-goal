@@ -460,18 +460,6 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 .dream-modal-foot button{border:none;border-radius:8px;padding:9px 20px;font-size:13.5px;font-weight:600;cursor:pointer}
 .dm-btn-cancel{background:#f0f4fa;color:var(--navy)}
 .dm-btn-save{background:var(--blue);color:#fff}
-/* バックアップモーダル */
-#backupOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:none;align-items:center;justify-content:center}
-.backup-modal{background:#fff;border-radius:14px;width:340px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
-.backup-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;color:var(--navy)}
-.backup-hd button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--sub)}
-.backup-body{padding:16px 18px}
-.backup-body p{font-size:13px;color:var(--sub);margin:0 0 10px}
-.backup-textarea{width:100%;height:120px;font-size:11px;font-family:monospace;border:1px solid var(--line);border-radius:8px;padding:8px;box-sizing:border-box;resize:none;color:var(--navy)}
-.backup-foot{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
-.backup-foot button{flex:1;border:none;border-radius:8px;padding:9px;font-size:13.5px;font-weight:600;cursor:pointer}
-.backup-copy-btn{background:var(--blue);color:#fff}
-.backup-cancel-btn{background:#f0f4fa;color:var(--navy)}
 /* 設定モーダル */
 #settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:center;justify-content:center}
 .settings-modal{background:#fff;border-radius:14px;width:320px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
@@ -513,22 +501,6 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 </div>
 
 <!-- 設定モーダル -->
-<div id="backupOverlay" onclick="if(event.target===this)closeBackupModal()">
-  <div class="backup-modal">
-    <div class="backup-hd">
-      <span>📦 バックアップ</span>
-      <button onclick="closeBackupModal()">✕</button>
-    </div>
-    <div class="backup-body">
-      <p>下のテキストを全選択してコピーし、メモやファイルに保存してください。</p>
-      <textarea id="backupTextarea" class="backup-textarea" readonly></textarea>
-    </div>
-    <div class="backup-foot">
-      <button class="backup-copy-btn" onclick="copyBackupText()">コピー</button>
-      <button class="backup-cancel-btn" onclick="closeBackupModal()">閉じる</button>
-    </div>
-  </div>
-</div>
 <div id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-modal">
     <div class="settings-hd">
@@ -2312,41 +2284,14 @@ function closeSettings(){ document.getElementById('settingsOverlay').style.displ
 
 /* ================= 入出力 ================= */
 function exportJSON(){
-  const json=JSON.stringify(D,null,2);
-  const isIosPwa=navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
-  if(isIosPwa){
-    // iOSホーム画面追加時はダウンロード不可のためコピーモーダルを表示
-    document.getElementById('backupTextarea').value=json;
-    document.getElementById('backupOverlay').style.display='flex';
-    setTimeout(()=>{
-      const ta=document.getElementById('backupTextarea');
-      ta.focus();ta.select();
-    },100);
-  } else {
-    const blob=new Blob([json],{type:"text/plain;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    const d=new Date();
-    a.download=`原田式バックアップ_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast("JSONを書き出しました");
-  }
-}
-function closeBackupModal(){
-  document.getElementById('backupOverlay').style.display='none';
-}
-function copyBackupText(){
-  const ta=document.getElementById('backupTextarea');
-  ta.select();
-  navigator.clipboard.writeText(ta.value).then(()=>{
-    toast("クリップボードにコピーしました");
-    closeBackupModal();
-  }).catch(()=>{
-    document.execCommand('copy');
-    toast("コピーしました");
-    closeBackupModal();
-  });
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download=`原田式バックアップ_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("JSONを書き出しました");
 }
 async function importNozbe(ev){
   const file=ev.target.files[0]; if(!file) return;
