@@ -178,6 +178,15 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .gf-overdue-btn{font-weight:700;margin-bottom:4px;border:1.5px solid #e07055;color:#c0392b;background:#fff5f2}
 .gf-overdue-btn:hover{background:#fde8e2}
 .gf-overdue-btn.act{background:#e07055;color:#fff;border-color:#e07055}
+.gf-taskedit-btn{display:flex;align-items:center;justify-content:space-between;width:100%;font-weight:700;font-size:14px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--navy);color:var(--navy);background:#f0f3f9;cursor:pointer;margin-top:8px;user-select:none;text-align:left}
+.gf-taskedit-btn:hover{background:#e4e9f5}
+.gf-taskedit-panel{background:#f8fafd;border:1px solid #d8e2f5;border-radius:10px;padding:8px;margin-top:4px}
+.gf-taskedit-panel .gf-all{font-size:14px;font-weight:700;margin-bottom:6px;border-bottom:1px solid #e4eaf7;padding-bottom:6px}
+.gf-taskedit-panel .gf-section{border-bottom:1px solid #e4eaf7;padding-bottom:6px;margin-bottom:6px}
+.gf-taskedit-panel .gf-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.gf-taskedit-panel .gf-h{font-size:13px;background:#edf2fc;padding:5px 8px;border-radius:7px;margin:0 0 5px;color:#2c4a85}
+.gf-taskedit-panel .gf-h:hover{background:#dde8f8}
+.gf-taskedit-panel .gf-items{padding-left:4px}
 .overdue-hd{padding:10px 16px;background:#fff5f2;border-bottom:1px solid #f5c6bc;font-weight:700;font-size:14px;color:#c0392b;display:flex;align-items:center;gap:10px}
 .overdue-date-label{font-size:12px;font-weight:700;color:#e07055;margin-bottom:5px;padding:2px 6px;background:#fff0eb;border-radius:4px;display:inline-block}
 .overdue-move-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff0eb;border-bottom:1px solid #f5c6bc;flex-wrap:wrap}
@@ -2038,11 +2047,12 @@ function renderGTD(){
       <div class="gf-item gf-today-btn ${gtdView==='tomorrow'?'act':''}" data-view="tomorrow" data-f="" data-v="" style="margin-top:-4px;opacity:.85">📅 明日の計画</div>
       ${(()=>{const oc=(D.gtd.tasks||[]).filter(t=>t.deadline&&t.deadline<dateStr(0)&&!t.done).length;return `<div class="gf-item gf-overdue-btn ${gtdView==='overdue'?'act':''}" data-view="overdue" data-f="" data-v="">⚠️ 期限超過${oc?` <span style="margin-left:auto;background:${gtdView==='overdue'?'rgba(255,255,255,.3)':'#e07055'};color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;flex:0 0 auto">${oc}</span>`:''}</div>`;})()}
       <div class="gf-section ${gtdCollapsed.taskGroup?'gf-collapsed':''}">
-        <div class="gf-h gf-toggle" data-toggle="taskGroup">
-          <span><span class="gf-arrow">▾</span>📋 タスク管理</span>
+        <div class="gf-taskedit-btn gf-toggle" data-toggle="taskGroup">
+          <span>✏️ タスク編集</span>
+          <span class="gf-arrow" style="font-size:12px;color:var(--sub)">▾</span>
         </div>
-        <div class="gf-items">
-          <div class="gf-item gf-all ${!gtdFilter.type&&gtdView==='kanban'?'act':''}" data-f="" data-v="">すべて表示</div>
+        <div class="gf-items gf-taskedit-panel">
+          <div class="gf-item gf-all ${!gtdFilter.type&&gtdView==='kanban'?'act':''}" data-f="" data-v="">📋 すべて表示</div>
           <div class="gf-section ${gtdCollapsed.category?'gf-collapsed':''}">
             <div class="gf-h gf-toggle" data-toggle="category">
               <span><span class="gf-arrow">▾</span>🏷 カテゴリ</span>
