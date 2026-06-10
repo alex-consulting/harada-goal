@@ -386,6 +386,19 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
 .tl-panel-toggle{color:#fff;font-size:16px;transition:transform .2s}
 .tl-panel.tl-collapsed .tl-panel-toggle{transform:rotate(-90deg)}
 .tl-panel-body{padding:8px 14px 12px}
+.today-point{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.today-point-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.today-point-sec{margin-bottom:12px}
+.today-point-sec:last-child{margin-bottom:0}
+.today-point-label{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.today-feeling{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;color:var(--text);background:#fafbfd;line-height:1.55}
+.today-feeling:focus{outline:none;border-color:var(--blue);background:#fff}
+.tp3-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tp3-row:last-child{margin-bottom:0}
+.tp3-cb{width:18px;height:18px;flex:0 0 auto;accent-color:var(--blue);cursor:pointer}
+.tp3-text{flex:1;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:14px;font-family:inherit;color:var(--text);background:#fafbfd}
+.tp3-text:focus{outline:none;border-color:var(--blue);background:#fff}
+.tp3-text.tp3-done{text-decoration:line-through;color:var(--sub);background:#f4f5f8}
 .tl-panel.tl-collapsed .tl-panel-body{display:none}
 .tl-grid{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
 .tl-slot{display:flex;align-items:flex-start;gap:10px;min-width:0}
@@ -715,6 +728,7 @@ if(!D.dreams||!Array.isArray(D.dreams.items)) D.dreams={items:[],nextId:1}; // �
 if(!D.gtd.projectColors) D.gtd.projectColors={}; // プロジェクトカラー
 if(!Array.isArray(D.gtd.projects)) D.gtd.projects=[];
 if(!Array.isArray(D.gtd.categories)) D.gtd.categories=[];
+if(!D.dailyFocus) D.dailyFocus={};
 D.gtd.tasks.forEach(function(t){
   if(t.isRoutine===undefined) t.isRoutine=false;
   if(!Array.isArray(t.routineItems)) t.routineItems=[];
@@ -1948,8 +1962,48 @@ function renderTimeline(targetDate, panelTitle, showNow){
     <div class="tl-panel-body">${bodyContent}</div>
   </div>`;
 }
-function renderTodayTimeline(){ return renderTimeline(dateStr(0),'📅 1日をスタート！',true); }
+function renderTodayTimeline(){
+  const today=dateStr(0);
+  if(!D.dailyFocus) D.dailyFocus={};
+  if(!D.dailyFocus[today]) D.dailyFocus[today]={feeling:'',top3:[{text:'',done:false},{text:'',done:false},{text:'',done:false}]};
+  const df=D.dailyFocus[today];
+  if(!Array.isArray(df.top3)||df.top3.length<3){
+    df.top3=[0,1,2].map(i=>df.top3&&df.top3[i]?df.top3[i]:{text:'',done:false});
+  }
+  const top3HTML=df.top3.map((item,i)=>`
+    <div class="tp3-row">
+      <input type="checkbox" class="tp3-cb" ${item.done?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
+      <input type="text" class="tp3-text ${item.done?'tp3-done':''}" value="${esc(item.text)}" placeholder="タスク ${i+1}" oninput="dailyTop3Text('${today}',${i},this.value)">
+    </div>`).join('');
+  const panel=`<div class="today-point">
+    <div class="today-point-title">📌 今日のポイント</div>
+    <div class="today-point-sec">
+      <div class="today-point-label">🌙 1日の終わりの気持ち</div>
+      <textarea class="today-feeling" placeholder="今日はどんな1日でしたか？" oninput="dailyFeelingUpdate('${today}',this.value)">${esc(df.feeling||'')}</textarea>
+    </div>
+    <div class="today-point-sec">
+      <div class="today-point-label">⭐ 今日の大事なタスク TOP3</div>
+      ${top3HTML}
+    </div>
+  </div>`;
+  return panel+renderTimeline(today,'📅 1日をスタート！',true);
+}
 function renderTomorrowTimeline(){ return renderTimeline(dateStr(1),'📅 明日の計画',false); }
+function dailyFeelingUpdate(date,val){
+  if(!D.dailyFocus) D.dailyFocus={};
+  if(!D.dailyFocus[date]) D.dailyFocus[date]={feeling:'',top3:[{text:'',done:false},{text:'',done:false},{text:'',done:false}]};
+  D.dailyFocus[date].feeling=val; save();
+}
+function dailyTop3Text(date,i,val){
+  if(!D.dailyFocus) D.dailyFocus={};
+  if(!D.dailyFocus[date]) D.dailyFocus[date]={feeling:'',top3:[{text:'',done:false},{text:'',done:false},{text:'',done:false}]};
+  D.dailyFocus[date].top3[i].text=val; save();
+}
+function dailyTop3Toggle(date,i){
+  if(!D.dailyFocus||!D.dailyFocus[date]) return;
+  D.dailyFocus[date].top3[i].done=!D.dailyFocus[date].top3[i].done;
+  save(); renderGTD();
+}
 let overdueSelected=new Set();
 let overdueTargetDate='';
 function overdueToggle(id){
