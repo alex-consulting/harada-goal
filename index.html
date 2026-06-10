@@ -139,6 +139,25 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .gtd-wrap{display:flex;gap:14px;align-items:flex-start}
 .gtd-side{flex:0 0 210px;background:#f4f6fa;border:1px solid var(--line);border-radius:10px;padding:10px}
 .gtd-main{flex:1;min-width:0}
+.gtd-mob-toggle{display:none;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:pointer;margin-bottom:10px;width:100%;box-sizing:border-box}
+.gtd-mob-label{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gtd-side-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:998}
+@media(max-width:700px){
+  .gtd-mob-toggle{display:flex}
+  .gtd-side{
+    position:fixed;top:0;left:0;bottom:0;
+    width:76vw;max-width:260px;
+    border-radius:0 12px 12px 0;
+    z-index:999;
+    transform:translateX(-110%);
+    transition:transform .22s ease;
+    overflow-y:auto;
+    flex:none;
+  }
+  .gtd-side.mob-open{transform:translateX(0)}
+  .gtd-side-backdrop.mob-open{display:block}
+  .gtd-wrap{display:block}
+}
 .gf-h{font-weight:700;font-size:14px;color:var(--navy);margin:12px 0 5px;display:flex;justify-content:space-between;align-items:center}
 .gf-h:first-child{margin-top:0}
 .gf-toggle{cursor:pointer;user-select:none}
@@ -1992,8 +2011,12 @@ function renderGTD(){
     <input type="text" id="gtdCapture" placeholder="タスクを追加する">
     <button class="btn-save" onclick="gtdAdd()">追加</button>
   </div>
+  <button class="gtd-mob-toggle" id="gtdMobToggle" onclick="toggleGtdSidebar()">
+    <span>☰</span><span class="gtd-mob-label">${gtdMobLabelText()}</span><span style="font-size:11px;color:var(--sub)">▾</span>
+  </button>
+  <div class="gtd-side-backdrop" id="gtdSideBackdrop" onclick="closeGtdSidebar()"></div>
   <div class="gtd-wrap">
-    <aside class="gtd-side">
+    <aside class="gtd-side" id="gtdSide">
       <div class="gf-item gf-today-btn ${gtdView==='today'?'act':''}" data-view="today" data-f="" data-v="">📅 今日のスケジュール</div>
       <div class="gf-item gf-today-btn ${gtdView==='tomorrow'?'act':''}" data-view="tomorrow" data-f="" data-v="" style="margin-top:-4px;opacity:.85">📅 明日のスケジュール</div>
       ${(()=>{const oc=(D.gtd.tasks||[]).filter(t=>t.deadline&&t.deadline<dateStr(0)&&!t.done).length;return `<div class="gf-item gf-overdue-btn ${gtdView==='overdue'?'act':''}" data-view="overdue" data-f="" data-v="">⚠️ 期限超過${oc?` <span style="margin-left:auto;background:${gtdView==='overdue'?'rgba(255,255,255,.3)':'#e07055'};color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;flex:0 0 auto">${oc}</span>`:''}</div>`;})()}
@@ -2059,6 +2082,27 @@ function gtdAdd(){
   cap.value=""; save(); renderGTD();
   const c2=document.getElementById("gtdCapture"); if(c2) c2.focus();
 }
+function toggleGtdSidebar(){
+  const side=document.getElementById('gtdSide');
+  const bd=document.getElementById('gtdSideBackdrop');
+  if(!side||!bd) return;
+  const isOpen=side.classList.contains('mob-open');
+  side.classList.toggle('mob-open',!isOpen);
+  bd.classList.toggle('mob-open',!isOpen);
+}
+function closeGtdSidebar(){
+  const side=document.getElementById('gtdSide');
+  const bd=document.getElementById('gtdSideBackdrop');
+  if(side) side.classList.remove('mob-open');
+  if(bd) bd.classList.remove('mob-open');
+}
+function gtdMobLabelText(){
+  if(gtdView==='today') return '📅 今日のスケジュール';
+  if(gtdView==='tomorrow') return '📅 明日のスケジュール';
+  if(gtdView==='overdue') return '⚠️ 期限超過';
+  if(gtdFilter.type&&gtdFilter.value) return gtdFilter.value;
+  return '📋 すべて表示';
+}
 function bindGTD(root){
   const cap=root.querySelector("#gtdCapture");
   cap.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); gtdAdd(); }});
@@ -2115,6 +2159,7 @@ function bindGTD(root){
         const type=it.dataset.f;
         gtdFilter = type ? {type,value:it.dataset.v} : {type:null,value:null};
       }
+      closeGtdSidebar();
       renderGTD();
     });
   });
