@@ -1246,8 +1246,10 @@ let gtdCollapsed={category:false,project:false};
 function gtdTask(id){ return D.gtd.tasks.find(t=>String(t.id)===String(id)); }
 function gtdListOf(type){ return type==='project'?D.gtd.projects:D.gtd.categories; }
 function gtdVisible(){
+  const today=new Date().toISOString().slice(0,10);
   return D.gtd.tasks.filter(t=>{
     if(!gtdFilter.type) return true;
+    if(gtdFilter.type==='today') return (t.deadline||"")===today;
     if(gtdFilter.type==='project') return (t.project||"")===gtdFilter.value;
     if(gtdFilter.type==='category') return (t.categories||[]).includes(gtdFilter.value);
     return true;
@@ -1321,6 +1323,7 @@ function renderGTD(){
   </div>
   <div class="gtd-wrap">
     <aside class="gtd-side">
+      <div class="gf-item gf-all ${gtdFilter.type==='today'?'act':''}" data-f="today" data-v="" style="margin-bottom:4px">📅 今日のスケジュール</div>
       <div class="gf-item gf-all ${!gtdFilter.type?'act':''}" data-f="" data-v="">📋 すべて表示</div>
       <div class="gf-section ${gtdCollapsed.category?'gf-collapsed':''}">
         <div class="gf-h gf-toggle" data-toggle="category">
@@ -1358,6 +1361,7 @@ function gtdAdd(){
   const task={id:D.gtd.nextId++, text:v, status:"inbox", project:"", categories:[], created:Date.now()};
   if(gtdFilter.type==='project') task.project=gtdFilter.value;
   if(gtdFilter.type==='category') task.categories=[gtdFilter.value];
+  if(gtdFilter.type==='today') task.deadline=new Date().toISOString().slice(0,10);
   D.gtd.tasks.unshift(task);
   cap.value=""; save(); renderGTD();
   const c2=document.getElementById("gtdCapture"); if(c2) c2.focus();
