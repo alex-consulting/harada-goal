@@ -1378,7 +1378,7 @@ function gtdCard(t){
     </div>
     ${(t.routineItems&&t.routineItems.length)?`
     <div class="ri-list">
-      ${t.routineItems.map(it=>`<div class="ri-item">
+      ${[...t.routineItems].sort((a,b)=>(a.done?1:0)-(b.done?1:0)).map(it=>`<div class="ri-item">
         <input type="checkbox" class="ri-check" data-tid="${t.id}" data-iid="${it.id}" ${it.done?'checked':''}>
         <span class="ri-text${it.done?' ri-done':''}">${esc(it.text)}</span>
       </div>`).join('')}
