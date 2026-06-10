@@ -350,11 +350,24 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
     <textarea id="gmText" rows="2"></textarea>
     <p class="gm-label">プロジェクト</p>
     <select id="gmProject" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px;color:#1565c0"></select>
-    <p class="gm-label">期限</p>
+    <p class="gm-label">スタート日時</p>
     <div class="gm-row">
       <input type="date" id="gmDate">
       <input type="time" id="gmTime">
     </div>
+    <p class="gm-label">繰り返し</p>
+    <select id="gmRecur" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px">
+      <option value="">繰り返しなし</option>
+      <option value="daily">毎日</option>
+      <option value="weekly">毎週</option>
+      <option value="monthly">毎月</option>
+      <option value="yearly">毎年</option>
+      <option value="2days">２日ごと</option>
+      <option value="3days">３日ごと</option>
+      <option value="4days">４日ごと</option>
+      <option value="10days">１０日ごと</option>
+      <option value="2weeks">２週ごと</option>
+    </select>
     <p class="gm-label">緊急・重要</p>
     <div class="gm-chk-row">
       <label><input type="checkbox" id="gmUrgent"> 緊急</label>
@@ -1039,6 +1052,7 @@ function openGtdModal(id){
   gmProj.innerHTML=`<option value="">（なし）</option>`+D.gtd.projects.map(p=>`<option value="${esc(p)}" ${p===(t.project||"")?'selected':''}>${esc(p)}</option>`).join("");
   document.getElementById("gmDate").value=t.deadline||"";
   document.getElementById("gmTime").value=t.deadlineTime||"";
+  document.getElementById("gmRecur").value=t.recur||"";
   document.getElementById("gmMemo").value=t.memo||"";
   document.getElementById("gmUrgent").checked=!!t.urgent;
   document.getElementById("gmImportant").checked=!!t.important;
@@ -1074,6 +1088,7 @@ function saveGtdModal(){
   t.project=document.getElementById("gmProject").value;
   t.deadline=document.getElementById("gmDate").value;
   t.deadlineTime=document.getElementById("gmTime").value;
+  t.recur=document.getElementById("gmRecur").value||"";
   t.memo=document.getElementById("gmMemo").value;
   const actBtn=document.querySelector("#gmDurBtns .gm-dur-btn.act");
   t.duration=actBtn?actBtn.dataset.dur:"";
@@ -1240,6 +1255,7 @@ function gtdVisible(){
 }
 function gtdOpts(list,val){ return list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join(""); }
 const GTD_DUR_LABEL={5:"5分",15:"15分",60:"60分",more:"それ以上"};
+const GTD_RECUR_LABEL={daily:"毎日",weekly:"毎週",monthly:"毎月",yearly:"毎年","2days":"２日ごと","3days":"３日ごと","4days":"４日ごと","10days":"１０日ごと","2weeks":"２週ごと"};
 function gtdQuadrant(t){
   if(t.urgent===undefined&&t.important===undefined) return null;
   const u=!!t.urgent, i=!!t.important;
@@ -1273,6 +1289,7 @@ function gtdCard(t){
       ${quadBadge}
       ${dl?`<span class="kmeta-dl${dl.overdue?' overdue':''}">${dl.text}</span>`:''}
       ${t.duration?`<span class="kmeta-dur">⏱ ${GTD_DUR_LABEL[t.duration]||t.duration}</span>`:''}
+      ${t.recur?`<span class="kmeta-dur" style="background:#e8f5e9;color:#2e7d32">🔁 ${GTD_RECUR_LABEL[t.recur]||t.recur}</span>`:''}
       ${t.project?`<span class="ktag kproj-disp">📁 ${esc(t.project)}</span>`:''}
       <div class="kcat-picker">${catTags}</div>
     </div>
