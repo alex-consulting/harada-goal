@@ -2035,7 +2035,7 @@ function renderGTD(){
   if(needSave) save();
   const vis=gtdVisible();
   root.innerHTML=`
-  <div class="gtd-cap">
+  <div class="gtd-cap" style="${gtdView==='kanban'?'':'display:none'}">
     <input type="text" id="gtdCapture" placeholder="タスクを追加する">
     <button class="btn-save" onclick="gtdAdd()">追加</button>
   </div>
