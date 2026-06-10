@@ -400,12 +400,8 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
       <option value="daily">毎日</option>
       <option value="weekly">毎週</option>
       <option value="monthly">毎月</option>
+      <option value="quarterly">毎Q</option>
       <option value="yearly">毎年</option>
-      <option value="2days">２日ごと</option>
-      <option value="3days">３日ごと</option>
-      <option value="4days">４日ごと</option>
-      <option value="10days">１０日ごと</option>
-      <option value="2weeks">２週ごと</option>
     </select>
     <p class="gm-label">緊急・重要</p>
     <div class="gm-chk-row">
@@ -417,18 +413,14 @@ td.dsun .daybtn{border-color:#f3c1c1}td.dsat .daybtn{border-color:#bcd2f5}
     <div class="gm-dur" id="gmDurBtns">
       <button class="gm-dur-btn" data-dur="5">5分</button>
       <button class="gm-dur-btn" data-dur="15">15分</button>
+      <button class="gm-dur-btn" data-dur="30">30分</button>
       <button class="gm-dur-btn" data-dur="60">60分</button>
       <button class="gm-dur-btn" data-dur="more">それ以上</button>
     </div>
     <p class="gm-label">カテゴリ</p>
     <div id="gmCats" class="gm-dur"></div>
-    <p class="gm-label">
-      <label class="gm-routine-toggle">
-        <input type="checkbox" id="gmIsRoutine" onchange="toggleGmRoutineArea()">
-        🔁 ルーティンタスク（サブタスク管理）
-      </label>
-    </p>
-    <div id="gmRoutineArea" style="display:none">
+    <p class="gm-label">サブタスク</p>
+    <div id="gmRoutineArea">
       <div id="gmRoutineList"></div>
       <div class="gm-routine-addrow">
         <input type="text" id="gmRoutineInput" placeholder="サブタスクを追加..."
@@ -1161,10 +1153,8 @@ function openGtdModal(id){
       if(!already) b.classList.add("act");
     };
   });
-  // ルーティンタスク
-  document.getElementById('gmIsRoutine').checked=!!(t.isRoutine);
+  // サブタスク
   gmRoutineItems=JSON.parse(JSON.stringify(t.routineItems||[]));
-  document.getElementById('gmRoutineArea').style.display=t.isRoutine?'block':'none';
   gmRenderRoutineItems();
   document.getElementById("gtdModalBg").classList.add("show");
   setTimeout(()=>document.getElementById("gmText").focus(),50);
@@ -1182,8 +1172,7 @@ function saveGtdModal(){
   t.categories=[...document.querySelectorAll("#gmCats [data-gcat].act")].map(b=>b.dataset.gcat);
   t.urgent=document.getElementById("gmUrgent").checked;
   t.important=document.getElementById("gmImportant").checked;
-  t.isRoutine=document.getElementById('gmIsRoutine').checked;
-  t.routineItems=t.isRoutine?JSON.parse(JSON.stringify(gmRoutineItems)):[];
+  t.routineItems=JSON.parse(JSON.stringify(gmRoutineItems));
   save(); renderGTD();
   closeGtdModal();
 }
@@ -1342,14 +1331,14 @@ function gtdVisible(){
     if(gtdFilter.type==='project') return (t.project||"")===gtdFilter.value;
     if(gtdFilter.type==='category') return (t.categories||[]).includes(gtdFilter.value);
     if(gtdFilter.type==='recur') return gtdFilter.value
-      ? (t.isRoutine&&(t.recur||"")===gtdFilter.value)
-      : !!(t.isRoutine);
+      ? (t.recur||"")===gtdFilter.value
+      : !!(t.recur);
     return true;
   });
 }
 function gtdOpts(list,val){ return list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join(""); }
-const GTD_DUR_LABEL={5:"5分",15:"15分",60:"60分",more:"それ以上"};
-const GTD_RECUR_LABEL={daily:"毎日",weekly:"毎週",monthly:"毎月",yearly:"毎年","2days":"２日ごと","3days":"３日ごと","4days":"４日ごと","10days":"１０日ごと","2weeks":"２週ごと"};
+const GTD_DUR_LABEL={5:"5分",15:"15分",30:"30分",60:"60分",more:"それ以上"};
+const GTD_RECUR_LABEL={daily:"毎日",weekly:"毎週",monthly:"毎月",quarterly:"毎Q",yearly:"毎年"};
 function gtdQuadrant(t){
   if(t.urgent===undefined&&t.important===undefined) return null;
   const u=!!t.urgent, i=!!t.important;
@@ -1387,7 +1376,7 @@ function gtdCard(t){
       ${t.project?`<span class="ktag kproj-disp">📁 ${esc(t.project)}</span>`:''}
       <div class="kcat-picker">${catTags}</div>
     </div>
-    ${(t.isRoutine&&t.routineItems&&t.routineItems.length)?`
+    ${(t.routineItems&&t.routineItems.length)?`
     <div class="ri-list">
       ${t.routineItems.map(it=>`<div class="ri-item">
         <input type="checkbox" class="ri-check" data-tid="${t.id}" data-iid="${it.id}" ${it.done?'checked':''}>
@@ -1491,9 +1480,9 @@ function renderGTD(){
           <span><span class="gf-arrow">▾</span>🔁 ルーティン</span>
         </div>
         <div class="gf-items">
-          <div class="gf-item ${gtdFilter.type==='recur'&&!gtdFilter.value&&gtdView!=='today'?'act':''}" data-f="recur" data-v="">すべて <span class="gf-cnt">${D.gtd.tasks.filter(t=>t.isRoutine&&!t.done).length||''}</span></div>
-          ${Object.entries(GTD_RECUR_LABEL).filter(([k])=>D.gtd.tasks.some(t=>t.isRoutine&&t.recur===k&&!t.done)).map(([k,label])=>`
-          <div class="gf-item ${gtdFilter.type==='recur'&&gtdFilter.value===k&&gtdView!=='today'?'act':''}" data-f="recur" data-v="${k}">${label} <span class="gf-cnt">${D.gtd.tasks.filter(t=>t.isRoutine&&t.recur===k&&!t.done).length}</span></div>`).join('')}
+          <div class="gf-item ${gtdFilter.type==='recur'&&!gtdFilter.value&&gtdView!=='today'?'act':''}" data-f="recur" data-v="">すべて <span class="gf-cnt">${D.gtd.tasks.filter(t=>!!t.recur&&!t.done).length||''}</span></div>
+          ${Object.entries(GTD_RECUR_LABEL).map(([k,label])=>`
+          <div class="gf-item ${gtdFilter.type==='recur'&&gtdFilter.value===k&&gtdView!=='today'?'act':''}" data-f="recur" data-v="${k}">${label}<span class="gf-cnt">${D.gtd.tasks.filter(t=>t.recur===k&&!t.done).length||''}</span></div>`).join('')}
         </div>
       </div>
       <div class="gf-section ${gtdCollapsed.category?'gf-collapsed':''}">
