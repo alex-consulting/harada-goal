@@ -175,6 +175,8 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .gf-today-btn{font-weight:700;margin-bottom:8px;border:1.5px solid var(--blue);color:var(--blue);background:var(--blue-l)}
 .gf-today-btn:hover{background:#d0e0fa}
 .gf-today-btn.act{background:var(--blue);color:#fff;border-color:var(--blue)}
+.gf-start-main{font-size:16px;padding:12px 14px;border-width:2px;margin-bottom:6px;border-radius:10px;justify-content:center;letter-spacing:.02em}
+.gf-start-main.act{box-shadow:0 2px 8px rgba(37,99,196,.25)}
 .gf-overdue-btn{font-weight:700;margin-bottom:4px;border:1.5px solid #e07055;color:#c0392b;background:#fff5f2}
 .gf-overdue-btn:hover{background:#fde8e2}
 .gf-overdue-btn.act{background:#e07055;color:#fff;border-color:#e07055}
@@ -2043,7 +2045,7 @@ function renderGTD(){
   <div class="gtd-side-backdrop" id="gtdSideBackdrop" onclick="closeGtdSidebar()"></div>
   <div class="gtd-wrap">
     <aside class="gtd-side" id="gtdSide">
-      <div class="gf-item gf-today-btn ${gtdView==='today'?'act':''}" data-view="today" data-f="" data-v="">📅 1日をスタート！</div>
+      <div class="gf-item gf-today-btn gf-start-main ${gtdView==='today'?'act':''}" data-view="today" data-f="" data-v="">📅 1日をスタート！</div>
       <div class="gf-item gf-today-btn ${gtdView==='tomorrow'?'act':''}" data-view="tomorrow" data-f="" data-v="" style="margin-top:-4px;opacity:.85">📅 明日の計画</div>
       ${(()=>{const oc=(D.gtd.tasks||[]).filter(t=>t.deadline&&t.deadline<dateStr(0)&&!t.done).length;return `<div class="gf-item gf-overdue-btn ${gtdView==='overdue'?'act':''}" data-view="overdue" data-f="" data-v="">⚠️ 期限超過${oc?` <span style="margin-left:auto;background:${gtdView==='overdue'?'rgba(255,255,255,.3)':'#e07055'};color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;flex:0 0 auto">${oc}</span>`:''}</div>`;})()}
       <div class="gf-section ${gtdCollapsed.taskGroup?'gf-collapsed':''}">
