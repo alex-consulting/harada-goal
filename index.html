@@ -2400,10 +2400,10 @@ function gtdCard(t){
     <button class="kdel" data-id="${t.id}" title="削除">✕</button>
     <div class="kcard-head" data-open="${t.id}">
       <input type="checkbox" class="kcheck" data-id="${t.id}" ${t.done?'checked':''}>
+      ${quadBadge}
       <div class="kcard-text">${textDisp}</div>
     </div>
     <div class="kcard-tags">
-      ${quadBadge}
       ${dl?`<span class="kmeta-dl${dl.overdue?' overdue':''}">${dl.text}</span>`:''}
       ${t.duration?`<span class="kmeta-dur">⏱ ${GTD_DUR_LABEL[t.duration]||t.duration}</span>`:''}
       ${t.recur?`<span class="kmeta-dur" style="background:var(--green-l);color:var(--green)">🔁 ${GTD_RECUR_LABEL[t.recur]||t.recur}</span>`:''}
