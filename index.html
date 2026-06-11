@@ -2450,8 +2450,9 @@ function advanceRecurDeadline(t){
   }
   t.deadline=localDateStr(next);
   t.done=false;
-  // サブタスクは次の期日になってから遅延リセット（即時リセットしない）
-  t._subResetDate=t.deadline;
+  // サブタスクを即時リセット
+  if(Array.isArray(t.routineItems)) t.routineItems.forEach(it=>it.done=false);
+  delete t._subResetDate;
 }
 let tlCollapsed=false;
 let tpFeelingCollapsed=false;
