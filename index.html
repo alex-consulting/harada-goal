@@ -478,13 +478,11 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .dream-year-section{margin-bottom:22px}
 .dream-year-heading{font-size:14px;font-weight:700;color:var(--sub);margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
 .dream-card-img{width:calc(100% + 32px);margin:-14px -16px 12px;height:140px;object-fit:cover;border-radius:14px 12px 0 0;display:block}
-.sg-card{background:var(--card);border:1px solid var(--blue-l);border-left:3px solid var(--blue);border-radius:14px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s;position:relative}
-.sg-card:hover{box-shadow:0 4px 16px rgba(0,122,255,.12)}
-.sg-card-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.sg-badge{font-size:10px;font-weight:700;letter-spacing:.04em;background:var(--blue);color:#fff;border-radius:4px;padding:2px 7px;flex:0 0 auto}
-.sg-ym{font-size:12px;font-weight:700;color:var(--blue)}
-.sg-text{font-size:13.5px;font-weight:600;color:var(--navy);line-height:1.45;margin-bottom:8px}
-.sg-dream-label{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:4px}
+.sg-card{background:var(--card);border:1px solid var(--blue-l);border-left:3px solid var(--blue);border-radius:10px;padding:8px 12px;cursor:pointer;transition:box-shadow .15s;display:flex;align-items:center;gap:8px}
+.sg-card:hover{box-shadow:0 3px 12px rgba(0,122,255,.1)}
+.sg-ym{font-size:11px;font-weight:600;color:var(--blue);flex:0 0 auto}
+.sg-text{font-size:13px;font-weight:400;color:var(--navy);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-dream-label{font-size:11px;color:var(--sub);flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 .dream-memo{font-size:12px;color:var(--sub);margin:4px 0 6px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dm-img-wrap{position:relative}
 .dm-img-preview{width:100%;height:160px;object-fit:cover;border-radius:8px;display:block;cursor:pointer}
@@ -1297,14 +1295,13 @@ function renderDreams(){
     </div>`;
   }
   function sgCardHtml(sg, d){
-    const ymFmt=sg.yearMonth?sg.yearMonth.replace('-','年')+'月':'年月未設定';
+    const month=sg.yearMonth?String(Number(sg.yearMonth.slice(5)))+'月':'—';
+    const catCls=dreamCatClass(d.category);
     return `<div class="sg-card" onclick="openDreamModal('${d.id}')">
-      <div class="sg-card-top">
-        <span class="sg-badge">STEP</span>
-        <span class="sg-ym">${ymFmt}</span>
-      </div>
-      <div class="sg-text">${esc(sg.text)}</div>
-      <div class="sg-dream-label">🏝️ ${esc(d.title)}</div>
+      <span class="dream-cat ${catCls}">${esc(d.category||'')}</span>
+      <span class="sg-ym">${month}</span>
+      <span class="sg-text">${esc(sg.text)}</span>
+      <span class="sg-dream-label">${esc(d.title)}</span>
     </div>`;
   }
 
