@@ -2581,17 +2581,17 @@ function renderTodayTimeline(){
 
   const panel=`<div class="today-point">
     <div class="today-point-sec">
-      <div class="tp-tab${tpFeelingCollapsed?' collapsed':''}" onclick="toggleTpTab('feeling')">今日の到達宣言<span class="tp-arrow">▾</span></div>
+      <div class="tp-tab${tpFeelingCollapsed?' collapsed':''}" onclick="toggleTpTab('feeling')">今日の到達宣言${df.feeling?`<span style="font-size:14px;margin-left:8px">📣</span><span style="font-size:11px;font-weight:700;color:#FF9500;margin-left:3px">宣言済</span>`:''}<span class="tp-arrow">▾</span></div>
       ${feelingBody}
     </div>
     <div class="today-point-sec">
       ${(()=>{
         const checkedCount=df.top3.filter(t=>t.done).length;
         const statusMap=[
-          {icon:'👣',text:'最初に1歩を踏み出そう',color:'var(--sub)'},
-          {icon:'📍',text:'この調子',color:'#FF9500'},
-          {icon:'🏁',text:'もうすこし',color:'var(--blue)'},
-          {icon:'🌸',text:'おめでとう',color:'#34C759'},
+          {icon:'👣',text:'まず最初の1歩を！',color:'var(--sub)'},
+          {icon:'📍',text:'この調子！',color:'#FF9500'},
+          {icon:'🏁',text:'もうすこし！',color:'var(--blue)'},
+          {icon:'🌸',text:'おめでとう！',color:'#34C759'},
         ];
         const s=statusMap[checkedCount];
         const badge=`<span style="font-size:14px;margin-left:8px">${s.icon}</span><span style="font-size:11px;font-weight:700;color:${s.color};margin-left:3px">${s.text}</span>`;
