@@ -825,12 +825,12 @@ function save(){
 // ---- Cloudflare同期 ----
 let syncPushTimer=null;
 function syncPush(){
-  if(!syncCfg.syncCode||WORKER_URL.includes('moriyamakoto')) return;
+  if(!syncCfg.syncCode||WORKER_URL.includes('CHANGEME')) return;
   clearTimeout(syncPushTimer);
   syncPushTimer=setTimeout(syncPushNow,3000);
 }
 async function syncPushNow(){
-  if(!syncCfg.syncCode||WORKER_URL.includes('moriyamakoto')) return;
+  if(!syncCfg.syncCode||WORKER_URL.includes('CHANGEME')) return;
   setSyncStatus("⬆ 同期中…");
   try{
     const {goalImages,...rest}=D;
@@ -845,7 +845,7 @@ async function syncPushNow(){
   }catch(e){ setSyncStatus("⚠ 同期失敗"); }
 }
 async function syncPull(){
-  if(!syncCfg.syncCode||WORKER_URL.includes('moriyamakoto')) return;
+  if(!syncCfg.syncCode||WORKER_URL.includes('CHANGEME')) return;
   try{
     const res=await fetch(WORKER_URL,{
       headers:{"X-Sync-Code":syncCfg.syncCode}
@@ -879,7 +879,7 @@ async function syncModalSave(){
   const code=document.getElementById("syncCodeInput").value.trim();
   const st=document.getElementById("syncModalStatus");
   if(code.length<4){ st.textContent="⚠ 同期コードは4文字以上にしてください"; return; }
-  if(WORKER_URL.includes('moriyamakoto')){ st.textContent="⚠ サーバーが未設定です（開発者にお問い合わせください）"; return; }
+  if(WORKER_URL.includes('CHANGEME')){ st.textContent="⚠ サーバーが未設定です（開発者にお問い合わせください）"; return; }
   syncCfg={syncCode:code};
   localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));
   st.textContent="同期中…";
