@@ -110,6 +110,23 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .btn-save{border:none;background:var(--blue);color:#fff;border-radius:8px;padding:9px 22px;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
 .btn-save:active{background:#0062CC}
 .btn-edit{border:1.5px solid var(--blue);background:var(--card);color:var(--blue);border-radius:8px;padding:9px 24px;font-size:14.5px;font-weight:700;cursor:pointer}
+/* ---- sheet section modal ---- */
+#sheetSecModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+#sheetSecModal.show{display:flex}
+.ssm-inner{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:580px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.ssm-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.ssm-hd span{font-size:16px;font-weight:700;color:var(--navy)}
+.ssm-hd button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub)}
+.ssm-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.ssm-foot button{border:1px solid var(--line);background:var(--card);padding:8px 18px;border-radius:8px;font-size:14px;cursor:pointer}
+.ssm-foot button.pri{background:var(--blue);color:#fff;border:none;font-weight:700}
+.ss-field{margin-bottom:12px}
+.ss-lbl{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:4px;display:block}
+.ss-inp{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--fill)}
+.ss-ta{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--fill);resize:vertical;min-height:70px}
+.ss-row2{display:flex;gap:8px;margin-bottom:6px}
+.vsec h3,.vgoal-label,.vhead h1{cursor:pointer}
+.vsec h3:hover,.vgoal-label:hover,.vhead h1:hover{opacity:.75}
 /* ---- read-only view ---- */
 .vsheet{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;max-width:920px;margin:0 auto}
 @media(max-width:700px){.vsheet{padding:16px 14px}}
@@ -595,6 +612,21 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
     <div class="dream-modal-foot">
       <button class="dm-btn-cancel" onclick="closeDreamModal()">キャンセル</button>
       <button class="dm-btn-save" onclick="saveDream()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 年間目標セクション編集モーダル -->
+<div id="sheetSecModal" onclick="if(event.target===this)closeSheetSec()">
+  <div class="ssm-inner">
+    <div class="ssm-hd">
+      <span id="sheetSecTitle"></span>
+      <button onclick="closeSheetSec()">✕</button>
+    </div>
+    <div id="sheetSecBody"></div>
+    <div class="ssm-foot">
+      <button onclick="closeSheetSec()">キャンセル</button>
+      <button id="sheetSecSave" class="pri">保存</button>
     </div>
   </div>
 </div>
@@ -1243,19 +1275,17 @@ function openDreamModal(id){
         <button class="dm-cat-btn${d.category==='Be'?' act-be':''}" data-cat="Be" onclick="dmSelectCat(this)">Be（なりたい）</button>
       </div>
     </div>
-    <div class="dm-row">
-      <div class="dm-field">
-        <label>登録日</label>
-        <input type="date" id="dmCreated" value="${d.createdDate||''}">
-      </div>
-      <div class="dm-field">
-        <label>実現予定年</label>
-        <input type="number" id="dmTarget" value="${d.targetDate||''}" min="2020" max="2100" placeholder="${new Date().getFullYear()}" style="width:120px">
-      </div>
+    <div class="dm-field">
+      <label>実現予定年</label>
+      <input type="number" id="dmTarget" value="${d.targetDate||''}" min="2020" max="2100" placeholder="${new Date().getFullYear()}" style="width:120px">
     </div>
     <div class="dm-field">
       <label>🎉 達成時の気持ち（目標達成をイメージしながら書く）</label>
       <textarea id="dmMemo" rows="3" placeholder="達成したときどんな気持ちになるか、どんな景色が見えるか...">${esc(d.memo||'')}</textarea>
+    </div>
+    <div class="dm-field">
+      <label>🪜 ステップ目標</label>
+      <textarea id="dmStepGoal" rows="3" placeholder="夢に向けた段階的な目標を記入...">${esc(d.stepGoal||'')}</textarea>
     </div>
     <div class="dm-field">
       <label>イメージ画像</label>
@@ -1292,12 +1322,14 @@ function saveDream(){
   if(!title){alert('タイトルを入力してください'); return;}
   const catBtn=document.querySelector('.dm-cat-btn.act-have,.dm-cat-btn.act-do,.dm-cat-btn.act-be');
   const category=catBtn?catBtn.dataset.cat:'Do';
+  const existing=dreamEditId?(D.dreams.items||[]).find(x=>String(x.id)===String(dreamEditId)):null;
   const data={
     title,
     category,
-    createdDate:document.getElementById('dmCreated').value,
+    createdDate:existing?existing.createdDate:localDateStr(new Date()),
     targetDate:document.getElementById('dmTarget').value,
     memo:document.getElementById('dmMemo').value,
+    stepGoal:document.getElementById('dmStepGoal').value,
     steps:[...dmSteps],
     image:dmImage||null
   };
@@ -1319,6 +1351,80 @@ function deleteDream(id){
 function closeDreamModal(){
   document.getElementById('dreamModalOverlay').style.display='none';
 }
+
+/* ================= 年間目標セクション編集 ================= */
+function openSheetSection(key){
+  const fld=(lbl,html)=>`<div class="ss-field"><label class="ss-lbl">${lbl}</label>${html}</div>`;
+  const inp=(id,val,type='text',ph='')=>`<input class="ss-inp" id="ss-${id}" type="${type}" value="${esc(val)}" placeholder="${ph}">`;
+  const ta=(id,val,rows=3,ph='')=>`<textarea class="ss-ta" id="ss-${id}" rows="${rows}" placeholder="${ph}">${esc(val)}</textarea>`;
+  const a=D.analysis;
+  let title='',body='',onSave=null;
+  switch(key){
+    case 'meta':
+      title='基本情報';
+      body=fld('氏名',inp('name',D.meta.name))+fld('記入日',inp('writeDate',toDateInput(D.meta.writeDate),'date'))+fld('目標達成日',inp('targetDate',toDateInput(D.meta.targetDate),'date'))+fld('更新日',inp('updateDate',toDateInput(D.meta.updateDate),'date'));
+      onSave=()=>{D.meta.name=document.getElementById('ss-name').value;D.meta.writeDate=document.getElementById('ss-writeDate').value;D.meta.targetDate=document.getElementById('ss-targetDate').value;D.meta.updateDate=document.getElementById('ss-updateDate').value;};
+      break;
+    case 'service':
+      title='奉仕活動';
+      body=fld('家族',ta('family',D.service.family))+fld('社会',ta('society',D.service.society));
+      onSave=()=>{D.service.family=document.getElementById('ss-family').value;D.service.society=document.getElementById('ss-society').value;};
+      break;
+    case 'goal':
+      title='達成目標';
+      body=fld('達成目標',ta('goal',D.goal,5))+fld('ご褒美・補足',ta('goalNote',D.goalNote,3));
+      onSave=()=>{D.goal=document.getElementById('ss-goal').value;D.goalNote=document.getElementById('ss-goalNote').value;};
+      break;
+    case 'milestones':
+      title='経過目標';
+      body=`<div id="ss-ms">${D.milestones.map((m,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px">${fld('期日',inp('ms-d'+i,m.date||'','date'))}${fld('内容',ta('ms-t'+i,m.text||'',2))}${fld('進捗%',`<input class="ss-inp" id="ss-ms-p${i}" type="number" min="0" max="100" value="${m.pct||0}" style="width:80px">`)}</div>`).join('')}</div>`;
+      onSave=()=>{D.milestones.forEach((_,i)=>{D.milestones[i].date=document.getElementById('ss-ms-d'+i).value;D.milestones[i].text=document.getElementById('ss-ms-t'+i).value;D.milestones[i].pct=+(document.getElementById('ss-ms-p'+i).value||0);});};
+      break;
+    case 'deadlines':
+      title='週間期日行動';
+      const todoIdxs=[];D.deadlines.forEach((d,i)=>{if(!d.done)todoIdxs.push(i);});
+      body=`<div id="ss-dl">${todoIdxs.map((ri,li)=>`<div class="ss-row2"><input class="ss-inp" style="width:90px;flex:0 0 auto" data-dli="${li}" data-dlf="month" type="text" placeholder="月/日" value="${esc(D.deadlines[ri].month||'')}"><input class="ss-inp" style="flex:1" data-dli="${li}" data-dlf="text" value="${esc(D.deadlines[ri].text||'')}"></div>`).join('')}</div><button onclick="ssAddDl()" style="border:1px dashed var(--line);background:none;width:100%;padding:7px;border-radius:8px;color:var(--sub);cursor:pointer;margin-top:4px">＋ 追加</button>`;
+      onSave=()=>{const ti=[];D.deadlines.forEach((d,i)=>{if(!d.done)ti.push(i);});document.querySelectorAll('[data-dli]').forEach(el=>{const li=+el.dataset.dli,f=el.dataset.dlf;if(ti[li]!=null)D.deadlines[ti[li]][f]=el.value;});};
+      break;
+    case 'quad':
+      title='目的・目標の4観点';
+      body=D.quad.map((q,qi)=>`<div style="margin-bottom:14px"><input class="ss-inp" style="font-weight:700;margin-bottom:6px" data-qi="${qi}" data-qf="title" value="${esc(q.title||'')}"><div>${q.items.map((it,ii)=>`<input class="ss-inp" style="margin-bottom:4px" data-qi="${qi}" data-qf="item" data-ii="${ii}" value="${esc(it)}">`).join('')}</div></div>`).join('');
+      onSave=()=>{document.querySelectorAll('[data-qi]').forEach(el=>{const qi=+el.dataset.qi,qf=el.dataset.qf;if(qf==='title')D.quad[qi].title=el.value;else D.quad[qi].items[+el.dataset.ii]=el.value;});};
+      break;
+    case 'routines':
+      title='ルーティン行動';
+      body=`<div>${D.routines.map((r,i)=>`<input class="ss-inp" style="margin-bottom:4px" data-ri="${i}" value="${esc(r.text||'')}"></div>`).join('')}</div>`;
+      onSave=()=>{document.querySelectorAll('[data-ri]').forEach(el=>{const i=+el.dataset.ri;if(D.routines[i])D.routines[i].text=el.value;});};
+      break;
+    case 'supports':
+      title='目標達成のための支援';
+      body=`<div>${D.supports.map((s,i)=>`<div class="ss-row2"><input class="ss-inp" data-si="${i}" data-sf="who" placeholder="支援者" value="${esc(s.who||'')}"><input class="ss-inp" data-si="${i}" data-sf="what" placeholder="支援内容" value="${esc(s.what||'')}"></div>`).join('')}</div>`;
+      onSave=()=>{document.querySelectorAll('[data-si]').forEach(el=>{const i=+el.dataset.si,f=el.dataset.sf;if(D.supports[i])D.supports[i][f]=el.value;});};
+      break;
+    case 'analysis':
+      title='成功・強み／失敗・弱みの分析';
+      body=a.rows.map((row,i)=>`<div style="margin-bottom:16px"><div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:6px">${esc(row)}</div>${fld('成功・強み',ta('as'+i,a.success[i]||'',2))}${fld('失敗・弱み',ta('af'+i,a.failure[i]||'',2))}</div>`).join('');
+      onSave=()=>{a.rows.forEach((_,i)=>{a.success[i]=document.getElementById('ss-as'+i).value;a.failure[i]=document.getElementById('ss-af'+i).value;});};
+      break;
+    case 'problems':
+      title='予想される問題点と解決策';
+      body=a.rows.map((row,i)=>`<div style="margin-bottom:16px"><div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:6px">${esc(row)}</div>${fld('予想される問題点',ta('ap'+i,a.problem[i]||'',2))}${fld('解決策',ta('asol'+i,a.solution[i]||'',2))}</div>`).join('');
+      onSave=()=>{a.rows.forEach((_,i)=>{a.problem[i]=document.getElementById('ss-ap'+i).value;a.solution[i]=document.getElementById('ss-asol'+i).value;});};
+      break;
+  }
+  document.getElementById('sheetSecTitle').textContent=title;
+  document.getElementById('sheetSecBody').innerHTML=body;
+  document.getElementById('sheetSecSave').onclick=()=>{if(onSave){onSave();save();renderSheet();}closeSheetSec();};
+  document.getElementById('sheetSecModal').classList.add('show');
+}
+function ssAddDl(){
+  D.deadlines.push({month:'',text:'',done:false});
+  const ti=[];D.deadlines.forEach((d,i)=>{if(!d.done)ti.push(i);});
+  const li=ti.length-1;
+  const dl=document.getElementById('ss-dl');
+  if(dl){const div=document.createElement('div');div.className='ss-row2';div.innerHTML=`<input class="ss-inp" style="width:90px;flex:0 0 auto" data-dli="${li}" data-dlf="month" type="text" placeholder="月/日" value=""><input class="ss-inp" style="flex:1" data-dli="${li}" data-dlf="text" value="">`;dl.appendChild(div);}
+}
+function closeSheetSec(){document.getElementById('sheetSecModal').classList.remove('show');}
 
 /* ================= タブ ================= */
 function showTab(name){
@@ -1490,7 +1596,6 @@ function renderSheetView(){
   </div>
   <div class="mob-chips">
     <button onclick="printSheet()">🖨 A4印刷 / PDF</button>
-    <button onclick="setSheetMode('edit')">✎ 編集する</button>
   </div>
   <div class="gtd-wrap">
   <aside class="gtd-side side-static">
@@ -1500,8 +1605,8 @@ function renderSheetView(){
   </aside>
   <div class="gtd-main">
   <div class="vsheet">
-    <div class="vhead">
-      <h1>年間目標シート</h1>
+    <div class="vhead" onclick="openSheetSection('meta')" title="クリックして編集">
+      <h1>年間目標シート ✏️</h1>
       <div class="vmeta">
         <span><b>氏名</b>${esc(D.meta.name)||"—"}</span>
         <span><b>記入日</b>${esc(fmtDate(D.meta.writeDate))||"—"}</span>
@@ -1509,45 +1614,45 @@ function renderSheetView(){
         <span><b>更新日</b>${esc(fmtDate(D.meta.updateDate))||"—"}</span>
       </div>
     </div>
-    <div class="vsec"><h3>奉仕活動</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('service')">奉仕活動</h3>
       <p><b>家族：</b>${nl2br(D.service.family)||"—"}</p>
       <p><b>社会：</b>${nl2br(D.service.society)||"—"}</p>
     </div>
     <div class="vgoal">
-      <div class="vgoal-label">達成目標</div>
+      <div class="vgoal-label" onclick="openSheetSection('goal')">達成目標 ✏️</div>
       <div class="vgoal-main">${nl2br(D.goal)||"—"}</div>
       ${D.goalNote?`<div class="vgoal-note">${nl2br(D.goalNote)}</div>`:""}
       ${D.goalImages.length?`<div class="gimgs">${D.goalImages.map((src,i)=>`<img src="${src}" data-gzoom="${i}" alt="目標イメージ">`).join("")}</div>`:""}
     </div>
-    <div class="vsec"><h3>経過目標</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('milestones')">経過目標</h3>
       <div class="vms">${D.milestones.map(m=>`<div class="vmsbox ${(m.pct||0)>=100?'done100':''}"><div class="vmsd">${esc(m.date)||"—"}</div>${nl2br(m.text)}
         <div class="vprog"><div class="progress"><div style="width:${Math.max(0,Math.min(100,m.pct||0))}%"></div></div><span class="vpct">${m.pct||0}%</span></div></div>`).join("")}</div>
     </div>
-    <div class="vsec"><h3>週間期日行動</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('deadlines')">週間期日行動</h3>
       ${(()=>{const todo=D.deadlines.filter(d=>!d.done&&(d.text.trim()||d.month));const done=D.deadlines.filter(d=>d.done&&(d.text.trim()||d.month));
         const arr=dlTab==='done'?done:todo;
         const rows=arr.length?arr.map(dl=>`<div class="vdl">${dl.done?"☑":"☐"} <b>${esc(fmtMD(dl.month))}</b> ${esc(dl.text)}</div>`).join(""):"<p class='vempty'>—</p>";
         const toggle=dlTab==='done'?`<button class="linkbtn" onclick="dlTab='todo';renderSheet()">← 未完了の項目に戻る</button>`:(done.length?`<button class="linkbtn" onclick="dlTab='done';renderSheet()">完了済みを表示 (${done.length})</button>`:"");
         return rows+toggle;})()}
     </div>
-    <div class="vsec"><h3>目的・目標の4観点</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('quad')">目的・目標の4観点</h3>
       <div class="vquads">
         ${D.quad.map(q=>`<div class="vquad"><div class="vquad-t">${esc(q.title)}</div>
           <ol>${q.items.filter(x=>x.trim()).map(it=>`<li>${esc(it)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol></div>`).join("")}
       </div>
     </div>
-    <div class="vsec"><h3>ルーティン行動（重要度が高い順）</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('routines')">ルーティン行動（重要度が高い順）</h3>
       <ol class="vrt">${D.routines.filter(r=>r.text.trim()).map(r=>`<li>${esc(r.text)}</li>`).join("")||"<li class='vempty'>—</li>"}</ol>
     </div>
-    <div class="vsec"><h3>目標達成のための支援</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('supports')">目標達成のための支援</h3>
       <table class="vtab"><tr><th>支援者</th><th>支援内容</th></tr>
         ${D.supports.filter(s=>s.who||s.what).map(s=>`<tr><td>${esc(s.who)}</td><td>${esc(s.what)}</td></tr>`).join("")||"<tr><td class='vempty'>—</td><td></td></tr>"}</table>
     </div>
-    <div class="vsec"><h3>成功・強み／失敗・弱みの分析</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('analysis')">成功・強み／失敗・弱みの分析</h3>
       <table class="vtab vtab3"><tr><th></th><th>成功・強み</th><th>失敗・弱み</th></tr>
         ${a.rows.map((r,i)=>`<tr><th>${esc(r)}</th><td>${nl2br(a.success[i])}</td><td>${nl2br(a.failure[i])}</td></tr>`).join("")}</table>
     </div>
-    <div class="vsec"><h3>予想される問題点と解決策</h3>
+    <div class="vsec"><h3 onclick="openSheetSection('problems')">予想される問題点と解決策</h3>
       <table class="vtab vtab3"><tr><th></th><th>予想される問題点</th><th>解決策</th></tr>
         ${a.rows.map((r,i)=>`<tr><th>${esc(r)}</th><td>${nl2br(a.problem[i])}</td><td>${nl2br(a.solution[i])}</td></tr>`).join("")}</table>
     </div>
