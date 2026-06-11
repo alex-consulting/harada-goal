@@ -463,6 +463,10 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .dream-cat.be{background:rgba(175,82,222,.12);color:#AF52DE}
 .dream-title{font-size:14px;font-weight:600;color:var(--navy);line-height:1.4;flex:1;word-break:break-all}
 .dream-meta{font-size:11.5px;color:var(--sub);margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap}
+.dream-stepgoals{margin:6px 0;display:flex;flex-direction:column;gap:3px}
+.dream-sg-item{display:flex;align-items:baseline;gap:6px;font-size:12px}
+.dream-sg-ym{flex:0 0 auto;background:var(--blue-l);color:var(--blue);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600}
+.dream-sg-text{color:var(--navy);line-height:1.4}
 .dream-progress-wrap{margin-top:6px}
 .dream-progress-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub);margin-bottom:3px}
 .dream-progress-bar{height:6px;background:var(--fill);border-radius:3px;overflow:hidden}
@@ -1096,6 +1100,7 @@ function fitAll(root){root.querySelectorAll("textarea").forEach(fit);}
 let dreamFilter='all'; // 'all'|'Have'|'Do'|'Be'
 let dreamEditId=null;
 let dmSteps=[]; // モーダル編集中の一時ステップ配列
+let dmStepGoals=[]; // モーダル編集中のステップ目標配列
 let dmImage=null; // モーダル編集中の画像データURL
 
 function renderDmImgWrap(){
@@ -1187,6 +1192,36 @@ function dmDeleteStep(id){
   renderDmSteps();
 }
 
+function renderDmStepGoals(){
+  const list=document.getElementById('dmStepGoalList'); if(!list) return;
+  list.innerHTML=dmStepGoals.length
+    ? dmStepGoals.map(s=>`<div class="dm-step-item">
+        <div class="dm-step-body">
+          <input type="text" class="dm-step-text-input" value="${esc(s.text)}" placeholder="ステップ目標"
+            oninput="dmUpdateStepGoal('${s.id}','text',this.value)">
+          <input type="month" class="dm-step-date" value="${s.yearMonth||''}" title="目標年月"
+            onchange="dmUpdateStepGoal('${s.id}','yearMonth',this.value)">
+        </div>
+        <button class="dm-step-del" onclick="dmDeleteStepGoal('${s.id}')">✕</button>
+      </div>`).join('')
+    : `<div style="color:var(--sub);font-size:12.5px;padding:6px 0">ステップ目標をまだ追加していません</div>`;
+}
+function dmUpdateStepGoal(id,field,value){
+  const s=dmStepGoals.find(x=>String(x.id)===String(id));
+  if(s) s[field]=value;
+}
+function dmAddStepGoal(){
+  const inp=document.getElementById('dmStepGoalInput');
+  const monthInp=document.getElementById('dmStepGoalMonth');
+  const text=(inp.value||'').trim(); if(!text) return;
+  dmStepGoals.push({id:Date.now(),text,yearMonth:monthInp?monthInp.value:''});
+  inp.value=''; if(monthInp) monthInp.value=''; renderDmStepGoals();
+}
+function dmDeleteStepGoal(id){
+  dmStepGoals=dmStepGoals.filter(x=>String(x.id)!==String(id));
+  renderDmStepGoals();
+}
+
 function dreamCatClass(cat){
   return cat==='Have'?'have':cat==='Do'?'do':cat==='Be'?'be':'';
 }
@@ -1217,6 +1252,7 @@ function renderDreams(){
         <span class="dream-title">${esc(d.title)}</span>
       </div>
       ${d.memo?`<div class="dream-memo">🎉 ${esc(d.memo)}</div>`:''}
+      ${(()=>{const sgs=Array.isArray(d.stepGoals)?d.stepGoals:[];return sgs.length?`<div class="dream-stepgoals">${sgs.map(s=>`<div class="dream-sg-item"><span class="dream-sg-ym">${s.yearMonth?s.yearMonth.replace('-','年')+'月':'—'}</span><span class="dream-sg-text">${esc(s.text)}</span></div>`).join('')}</div>`:'';})()}
       ${(()=>{const pct=dreamProgress(d);const steps=Array.isArray(d.steps)?d.steps:[];return steps.length?`
       <div class="dream-progress-wrap">
         <div class="dream-progress-label"><span>進捗 ${steps.filter(s=>s.done).length}/${steps.length}</span><span>${pct}%</span></div>
@@ -1285,7 +1321,13 @@ function openDreamModal(id){
     </div>
     <div class="dm-field">
       <label>🪜 ステップ目標</label>
-      <textarea id="dmStepGoal" rows="3" placeholder="夢に向けた段階的な目標を記入...">${esc(d.stepGoal||'')}</textarea>
+      <div class="dm-step-list" id="dmStepGoalList"></div>
+      <div class="dm-step-addrow">
+        <input type="text" id="dmStepGoalInput" placeholder="ステップ目標を追加..."
+          onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();dmAddStepGoal();}">
+        <input type="month" id="dmStepGoalMonth" title="目標年月">
+        <button onclick="dmAddStepGoal()">追加</button>
+      </div>
     </div>
     <div class="dm-field">
       <label>イメージ画像</label>
@@ -1305,8 +1347,10 @@ function openDreamModal(id){
   overlay.querySelector('.dream-modal-hd span').textContent=isNew?'💭 夢を追加':'💭 夢を編集';
   overlay.style.display='flex';
   dmSteps=Array.isArray(d.steps)?d.steps.map(s=>({...s})):[];
+  dmStepGoals=Array.isArray(d.stepGoals)?d.stepGoals.map(s=>({...s})):[];
   dmImage=d.image||null;
   renderDmSteps();
+  renderDmStepGoals();
   renderDmImgWrap();
   document.getElementById('dmTitle').focus();
 }
@@ -1329,7 +1373,7 @@ function saveDream(){
     createdDate:existing?existing.createdDate:localDateStr(new Date()),
     targetDate:document.getElementById('dmTarget').value,
     memo:document.getElementById('dmMemo').value,
-    stepGoal:document.getElementById('dmStepGoal').value,
+    stepGoals:[...dmStepGoals],
     steps:[...dmSteps],
     image:dmImage||null
   };
