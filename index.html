@@ -427,7 +427,6 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .tp3-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .tp3-row:last-child{margin-bottom:0}
 .tp3-cb{width:18px;height:18px;flex:0 0 auto;accent-color:var(--blue);cursor:pointer}
-.tp3-area-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;color:#fff;flex:0 0 auto;box-sizing:border-box}
 .tp3-text{flex:1;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:14px;font-family:inherit;color:var(--text);background:var(--fill2)}
 .tp3-text:focus{outline:none;border-color:var(--blue);background:var(--card)}
 .tp3-text.tp3-done{text-decoration:line-through;color:var(--sub);background:var(--fill)}
@@ -1338,13 +1337,8 @@ function renderDreams(){
             <span style="font-size:12px;color:var(--sub)">現在 <strong style="color:var(--navy);font-size:15px">${ageYears}</strong> 歳</span>
             <span style="font-size:12px;color:var(--sub)">${ls}歳まであと <strong style="color:var(--blue);font-size:15px">${daysLeft.toLocaleString()}</strong> 日</span>
           </div>
-          <div style="position:relative;height:22px;background:var(--fill);border-radius:11px;overflow:hidden;border:1px solid var(--line)">
-            <div style="position:absolute;inset:0;height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,#34C759,#FF9500,#FF3B30);border-radius:11px;transition:width .3s"></div>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px">
-              <span style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)">0歳</span>
-              <span style="font-size:10px;font-weight:700;color:${pct>50?'#fff':'var(--sub)'};text-shadow:0 1px 2px rgba(0,0,0,.3)">${pct.toFixed(0)}%</span>
-              <span style="font-size:10px;font-weight:700;color:var(--sub)">${ls}歳</span>
-            </div>
+          <div style="height:4px;background:var(--fill);border-radius:2px;overflow:hidden;max-width:320px">
+            <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,var(--blue),#AF52DE);border-radius:2px;transition:width .3s"></div>
           </div>
         </div>`;
       })()}
@@ -2510,13 +2504,11 @@ function renderTodayTimeline(){
     df.top3=[0,1,2].map(i=>df.top3&&df.top3[i]?df.top3[i]:{text:'',done:false});
   }
   const todayTasks=(D.gtd.tasks||[]).filter(t=>(t.deadline||'')=== today&&!t.done);
-  const Q_COLOR={1:'#FF3B30',2:'#0071E3',3:'#FF9500',4:'var(--sub)'};
-  const Q_LABEL={1:'①',2:'②',3:'③',4:'④'};
   const top3HTML=df.top3.map((item,i)=>{
     const task=(D.gtd.tasks||[]).find(t=>t.text===item.text);
     const q=task?gtdQuadrant(task):null;
-    const badge=q?`<span class="tp3-area-badge" style="background:${Q_COLOR[q]}">${Q_LABEL[q]}</span>`
-                 :`<span class="tp3-area-badge" style="background:var(--fill);color:var(--sub);border:1px solid var(--line)">—</span>`;
+    const badge=q?`<span class="kquad kquad-${q}">${q}</span>`
+                 :`<span class="kquad" style="background:var(--fill);color:var(--faint);border:1px solid var(--line)">—</span>`;
     return `<div class="tp3-row">
       <input type="checkbox" class="tp3-cb" ${item.done?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
       ${badge}
