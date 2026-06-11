@@ -398,7 +398,10 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .tl-panel.tl-collapsed .tl-panel-toggle{transform:rotate(-90deg)}
 .tl-panel-body{padding:8px 14px 12px}
 .today-point{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-.today-point-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.today-point-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.today-point-title .tp-arrow{margin-left:auto;font-size:12px;color:var(--sub);transition:transform .2s}
+.today-point.collapsed .tp-arrow{transform:rotate(-90deg)}
+.today-point.collapsed .today-point-sec{display:none}
 .today-point-sec{margin-bottom:12px}
 .today-point-sec:last-child{margin-bottom:0}
 .today-point-label{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px}
@@ -1193,7 +1196,6 @@ function renderDreams(){
   root.innerHTML=`
   <div class="page-head">
     <div><h1 class="ph-title">🏝️ 夢リスト</h1><p class="ph-sub">夢あるところに行動がある。</p></div>
-    <button class="ph-action" onclick="openDreamModal(null)">＋ 夢を追加</button>
   </div>
   <div class="mob-chips">
     <button class="${dreamFilter==='all'?'act':''}" onclick="dreamFilter='all';renderDreams()">すべて</button>
@@ -1485,7 +1487,6 @@ function renderSheetView(){
   root.innerHTML=`
   <div class="page-head">
     <div><h1 class="ph-title">🎯 年間目標</h1><p class="ph-sub">心身・スキル・健康・生活習慣を整える。</p></div>
-    <button class="ph-action" onclick="setSheetMode('edit')">✎ 編集する</button>
   </div>
   <div class="mob-chips">
     <button onclick="printSheet()">🖨 A4印刷 / PDF</button>
@@ -2160,6 +2161,8 @@ function advanceRecurDeadline(t){
   t._subResetDate=t.deadline;
 }
 let tlCollapsed=false;
+let todayPointCollapsed=false;
+function toggleTodayPoint(){todayPointCollapsed=!todayPointCollapsed;const el=document.querySelector('.today-point');if(el)el.classList.toggle('collapsed',todayPointCollapsed);}
 function localDateStr(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -2237,8 +2240,8 @@ function renderTodayTimeline(){
         ${item.text&&!todayTasks.find(t=>t.text===item.text)?`<option value="${esc(item.text)}" selected>${esc(item.text)}</option>`:''}
       </select>
     </div>`).join('');
-  const panel=`<div class="today-point">
-    <div class="today-point-title">📌 今日の要諦（ようてい）</div>
+  const panel=`<div class="today-point${todayPointCollapsed?' collapsed':''}">
+    <div class="today-point-title" onclick="toggleTodayPoint()">📌 今日の要諦（ようてい）<span class="tp-arrow">▾</span></div>
     <div class="today-point-sec">
       <div class="today-point-label">🌙 今日１日の終わりにどんな自分になっていたいか宣言</div>
       <textarea class="today-feeling" placeholder="今日1日の終わりにどんな気持ちになっていたいですか？" oninput="dailyFeelingUpdate('${today}',this.value)">${esc(df.feeling||'')}</textarea>
@@ -2355,7 +2358,7 @@ function renderGTD(){
     <div><h1 class="ph-title">✅ ToDo</h1><p class="ph-sub">GTD®メソッドで、生産性の向上を助ける。</p></div>
   </div>
   <div class="gtd-cap">
-    <input type="text" id="gtdCapture" placeholder="タスクを追加したら、タスクを編集→Inboxを確認しよう">
+    <input type="text" id="gtdCapture" placeholder="タスク追加→Inbox">
     <button class="btn-save" onclick="gtdAdd()">追加</button>
   </div>
   <button class="gtd-mob-toggle" id="gtdMobToggle" onclick="toggleGtdSidebar()">
