@@ -658,14 +658,14 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
       <button class="settings-btn" onclick="document.getElementById('nozbeFile').click()">📥 Nozbeから移行</button>
       <input type="file" id="nozbeFile" accept=".zip" style="display:none" onchange="importNozbe(event);closeSettings()">
       <p class="settings-section">夢リスト</p>
-      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0">
         <div>
           <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">生年月日</label>
-          <input type="date" id="profileBirthday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px" onchange="D.profile.birthday=this.value;save()">
+          <input type="date" id="profileBirthday" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.profile.birthday=this.value;save()">
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">目標寿命（歳）</label>
-          <input type="number" id="profileLifespan" min="1" max="150" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px" onchange="D.profile.lifespan=+this.value;save()">
+          <input type="number" id="profileLifespan" min="1" max="150" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.profile.lifespan=+this.value;save()">
         </div>
       </div>
     </div>
@@ -1116,6 +1116,7 @@ function fitAll(root){root.querySelectorAll("textarea").forEach(fit);}
 
 /* ================= 夢タブ ================= */
 let dreamFilter='all'; // 'all'|'Have'|'Do'|'Be'
+let dreamShowSteps=true;
 let dreamEditId=null;
 let dmSteps=[]; // モーダル編集中の一時ステップ配列
 let dmStepGoals=[]; // モーダル編集中のステップ目標配列
@@ -1306,7 +1307,30 @@ function renderDreams(){
 
   root.innerHTML=`
   <div class="page-head">
-    <div><h1 class="ph-title">🏝️ 夢リスト</h1><p class="ph-sub">夢あるところに行動がある。</p></div>
+    <div style="flex:1">
+      <h1 class="ph-title">🏝️ 夢リスト</h1>
+      <p class="ph-sub">夢あるところに行動がある。人生一度きり。</p>
+      ${(()=>{
+        const b=D.profile&&D.profile.birthday;
+        const ls=D.profile&&D.profile.lifespan||90;
+        if(!b) return '';
+        const now=new Date();
+        const birth=new Date(b);
+        const goalDate=new Date(birth);
+        goalDate.setFullYear(birth.getFullYear()+ls);
+        const daysLeft=Math.max(0,Math.ceil((goalDate-now)/(1000*60*60*24)));
+        const ageMs=now-birth;
+        const totalMs=goalDate-birth;
+        const pct=Math.min(100,Math.max(0,(ageMs/totalMs*100)));
+        const ageYears=Math.floor(ageMs/(1000*60*60*24*365.25));
+        return `<div style="margin-top:8px">
+          <div style="font-size:12px;color:var(--sub);margin-bottom:4px">${ls}歳まであと <strong style="color:var(--navy);font-size:14px">${daysLeft.toLocaleString()}</strong> 日 ・ 現在 ${ageYears}歳</div>
+          <div style="height:6px;background:var(--fill);border-radius:3px;overflow:hidden;max-width:320px">
+            <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,var(--blue),#AF52DE);border-radius:3px;transition:width .3s"></div>
+          </div>
+        </div>`;
+      })()}
+    </div>
   </div>
   <div class="mob-chips">
     <button class="${dreamFilter==='all'?'act':''}" onclick="dreamFilter='all';renderDreams()">すべて</button>
@@ -1314,6 +1338,7 @@ function renderDreams(){
     <button class="${dreamFilter==='Do'?'act':''}" onclick="dreamFilter='Do';renderDreams()">Do</button>
     <button class="${dreamFilter==='Be'?'act':''}" onclick="dreamFilter='Be';renderDreams()">Be</button>
     <button onclick="openDreamModal(null)">＋ 夢を追加</button>
+    <button onclick="dreamShowSteps=!dreamShowSteps;renderDreams()" style="margin-left:auto">${dreamShowSteps?'ステップ非表示':'ステップ表示'}</button>
   </div>
   <div class="gtd-wrap">
   <aside class="gtd-side side-static">
@@ -1321,6 +1346,7 @@ function renderDreams(){
     <div class="gf-item ${dreamFilter==='Have'?'act':''}" onclick="dreamFilter='Have';renderDreams()">💎 Have（欲しい）</div>
     <div class="gf-item ${dreamFilter==='Do'?'act':''}" onclick="dreamFilter='Do';renderDreams()">🏃 Do（したい）</div>
     <div class="gf-item ${dreamFilter==='Be'?'act':''}" onclick="dreamFilter='Be';renderDreams()">🌟 Be（なりたい）</div>
+    <div class="gf-item ${dreamShowSteps?'':''}" onclick="dreamShowSteps=!dreamShowSteps;renderDreams()" style="border-top:1px solid var(--line);margin-top:8px;padding-top:10px;color:${dreamShowSteps?'var(--sub)':'var(--blue)'}">${dreamShowSteps?'ステップ非表示':'ステップ表示'}</div>
   </aside>
   <div class="gtd-main">
   ${items.length
@@ -1328,7 +1354,7 @@ function renderDreams(){
       <div class="dream-year-section">
         <div class="dream-year-heading">${y==='未設定'?'年未設定':y+'年'}</div>
         <div class="dream-grid">
-          ${groups[y].merged.map(item=>item.type==='dream'?cardHtml(item.d):sgCardHtml(item.sg,item.d)).join('')}
+          ${groups[y].merged.filter(item=>item.type==='dream'||dreamShowSteps).map(item=>item.type==='dream'?cardHtml(item.d):sgCardHtml(item.sg,item.d)).join('')}
         </div>
       </div>`).join('')
     : `<div class="dream-empty">夢をまだ登録していません。<br>「＋ 夢を追加」から登録しましょう！</div>`
