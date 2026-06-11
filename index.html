@@ -276,7 +276,7 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .kcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 30px 8px 8px;box-shadow:var(--shadow);cursor:grab}
 .kcard.kdrag{opacity:.5}
 .kcard.kdone{opacity:.6;background:var(--fill)}
-.kcard-head{display:flex;align-items:flex-start;gap:6px;cursor:pointer}
+.kcard-head{display:flex;align-items:center;gap:6px;cursor:pointer}
 .kquad{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;flex:0 0 auto}
 .kquad-1{background:#FF9500;color:#fff}
 .kquad-2{background:#30B0C7;color:#fff}
@@ -291,7 +291,7 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 #gmQuadLabel.q3{background:rgba(255,149,0,.15);color:#FF9F0A}
 #gmQuadLabel.q4{background:var(--fill);color:#8E8E93}
 .kcard-head:hover .kcard-text{background:var(--fill);border-radius:6px}
-.kcheck{appearance:none;-webkit-appearance:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--card);cursor:pointer;flex:0 0 auto;position:relative;transition:border-color .15s,background .15s}
+.kcheck{appearance:none;-webkit-appearance:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--card);cursor:pointer;flex:0 0 auto;position:relative;transition:border-color .15s,background .15s;margin-top:0}
 .kcheck:checked{background:var(--blue);border-color:var(--blue)}
 .kcheck:checked::after{content:'';position:absolute;top:5px;left:9px;width:6px;height:11px;border:2.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg)}
 .kcard-text{flex:1;font-size:13.5px;padding:2px 4px;line-height:1.5;word-break:break-all;color:var(--text);min-height:22px}
