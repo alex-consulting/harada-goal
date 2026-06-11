@@ -646,12 +646,23 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
       <p class="settings-section">同期</p>
       <button class="settings-btn" onclick="closeSettings();openSyncModal()">☁ 同期設定</button>
       <p class="settings-section">データ管理</p>
-      <button class="settings-btn" onclick="exportJSON()">📤 バックアップ（JSONエクスポート）</button>
-      <button class="settings-btn" onclick="document.getElementById('impFile').click()">📥 復元（JSONインポート）</button>
+      <button class="settings-btn" onclick="exportJSON()">📤 バックアップ</button>
+      <button class="settings-btn" onclick="document.getElementById('impFile').click()">📥 復元</button>
       <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(event);closeSettings()">
-      <p class="settings-section">移行</p>
+      <p class="settings-section">ToDo設定</p>
       <button class="settings-btn" onclick="document.getElementById('nozbeFile').click()">📥 Nozbeから移行</button>
       <input type="file" id="nozbeFile" accept=".zip" style="display:none" onchange="importNozbe(event);closeSettings()">
+      <p class="settings-section">夢リスト</p>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">生年月日</label>
+          <input type="date" id="profileBirthday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px" onchange="D.profile.birthday=this.value;save()">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">目標寿命（歳）</label>
+          <input type="number" id="profileLifespan" min="1" max="150" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px" onchange="D.profile.lifespan=+this.value;save()">
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -830,6 +841,7 @@ const DEFAULT_DATA = {
     ]
   },
   goalImages:[], // 達成目標のイメージ画像（dataURL）
+  profile:{birthday:'',lifespan:90}, // 夢リスト設定
   weekly:{}   // {"2026-06-08":{checks:{routineId:[7 bool]}, note:""}}
 };
 
@@ -849,6 +861,7 @@ if(!D.gtd.projectColors) D.gtd.projectColors={}; // プロジェクトカラー
 if(!Array.isArray(D.gtd.projects)) D.gtd.projects=[];
 if(!Array.isArray(D.gtd.categories)) D.gtd.categories=[];
 if(!D.dailyFocus) D.dailyFocus={};
+if(!D.profile) D.profile={birthday:'',lifespan:90};
 D.gtd.tasks.forEach(function(t){
   if(t.isRoutine===undefined) t.isRoutine=false;
   if(!Array.isArray(t.routineItems)) t.routineItems=[];
@@ -1406,8 +1419,8 @@ function openSheetSection(key){
   switch(key){
     case 'meta':
       title='基本情報';
-      body=fld('氏名',inp('name',D.meta.name))+fld('記入日',inp('writeDate',toDateInput(D.meta.writeDate),'date'))+fld('目標達成日',inp('targetDate',toDateInput(D.meta.targetDate),'date'))+fld('更新日',inp('updateDate',toDateInput(D.meta.updateDate),'date'));
-      onSave=()=>{D.meta.name=document.getElementById('ss-name').value;D.meta.writeDate=document.getElementById('ss-writeDate').value;D.meta.targetDate=document.getElementById('ss-targetDate').value;D.meta.updateDate=document.getElementById('ss-updateDate').value;};
+      body=fld('氏名',inp('name',D.meta.name))+fld('記入日',inp('writeDate',toDateInput(D.meta.writeDate),'date'))+fld('目標達成日',inp('targetDate',toDateInput(D.meta.targetDate),'date'));
+      onSave=()=>{D.meta.name=document.getElementById('ss-name').value;D.meta.writeDate=document.getElementById('ss-writeDate').value;D.meta.targetDate=document.getElementById('ss-targetDate').value;};
       break;
     case 'service':
       title='奉仕活動';
@@ -1416,12 +1429,13 @@ function openSheetSection(key){
       break;
     case 'goal':
       title='達成目標';
-      body=fld('達成目標',ta('goal',D.goal,5))+fld('ご褒美・補足',ta('goalNote',D.goalNote,3));
+      body=fld('達成目標',ta('goal',D.goal,5))+fld('ご褒美・補足',ta('goalNote',D.goalNote,3))+`<div class="ss-field"><label class="ss-lbl">イメージ画像</label><div id="ssGoalImgWrap"></div><input type="file" id="ssGoalImgFile" accept="image/*" multiple style="display:none" onchange="ssGoalAddImgs(this)"></div>`;
       onSave=()=>{D.goal=document.getElementById('ss-goal').value;D.goalNote=document.getElementById('ss-goalNote').value;};
+      setTimeout(()=>ssGoalRenderImgs(),0);
       break;
     case 'milestones':
       title='経過目標';
-      body=`<div id="ss-ms">${D.milestones.map((m,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px">${fld('期日',inp('ms-d'+i,m.date||'','date'))}${fld('内容',ta('ms-t'+i,m.text||'',2))}${fld('進捗%',`<input class="ss-inp" id="ss-ms-p${i}" type="number" min="0" max="100" value="${m.pct||0}" style="width:80px">`)}</div>`).join('')}</div>`;
+      body=`<div id="ss-ms">${D.milestones.map((m,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;overflow:hidden">${fld('期日',`<input class="ss-inp" id="ss-ms-d${i}" type="date" value="${esc(m.date||'')}" style="max-width:100%">`)}${fld('内容',ta('ms-t'+i,m.text||'',2))}${fld('進捗%',`<input class="ss-inp" id="ss-ms-p${i}" type="number" min="0" max="100" value="${m.pct||0}" style="width:80px">`)}</div>`).join('')}</div>`;
       onSave=()=>{D.milestones.forEach((_,i)=>{D.milestones[i].date=document.getElementById('ss-ms-d'+i).value;D.milestones[i].text=document.getElementById('ss-ms-t'+i).value;D.milestones[i].pct=+(document.getElementById('ss-ms-p'+i).value||0);});};
       break;
     case 'deadlines':
@@ -1458,8 +1472,49 @@ function openSheetSection(key){
   }
   document.getElementById('sheetSecTitle').textContent=title;
   document.getElementById('sheetSecBody').innerHTML=body;
-  document.getElementById('sheetSecSave').onclick=()=>{if(onSave){onSave();save();renderSheet();}closeSheetSec();};
+  document.getElementById('sheetSecSave').onclick=()=>{
+    if(onSave){
+      onSave();
+      D.meta.updateDate=localDateStr(new Date()); // 更新日を自動設定
+      save();renderSheet();
+    }
+    closeSheetSec();
+  };
   document.getElementById('sheetSecModal').classList.add('show');
+}
+function ssGoalRenderImgs(){
+  const wrap=document.getElementById('ssGoalImgWrap'); if(!wrap) return;
+  wrap.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">${(D.goalImages||[]).map((src,i)=>`<div style="position:relative"><img src="${src}" style="height:80px;border-radius:8px;cursor:pointer" onclick="ssGoalZoom(${i})"><button onclick="ssGoalDel(${i})" style="position:absolute;top:-4px;right:-4px;background:#FF3B30;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1;padding:0">✕</button></div>`).join('')}</div><button onclick="document.getElementById('ssGoalImgFile').click()" style="border:1px dashed var(--line);background:none;padding:8px 14px;border-radius:8px;color:var(--sub);cursor:pointer;font-size:13px">＋ 画像を追加</button>`;
+}
+function ssGoalDel(i){
+  D.goalImages.splice(i,1);
+  ssGoalRenderImgs();
+}
+function ssGoalZoom(i){
+  document.getElementById("lightboxImg").src=D.goalImages[i];
+  document.getElementById("lightbox").classList.add("show");
+}
+function ssGoalAddImgs(input){
+  const files=[...input.files]; if(!files.length) return;
+  let done=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxW=900,maxH=600;let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        D.goalImages.push(c.toDataURL('image/jpeg',0.75));
+        done++;if(done===files.length) ssGoalRenderImgs();
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value='';
 }
 function ssAddDl(){
   D.deadlines.push({month:'',text:'',done:false});
@@ -2762,7 +2817,13 @@ function bindGTD(root){
 }
 
 /* ================= 設定モーダル ================= */
-function openSettings(){ document.getElementById('settingsOverlay').style.display='flex'; }
+function openSettings(){
+  document.getElementById('settingsOverlay').style.display='flex';
+  const b=document.getElementById('profileBirthday');
+  const l=document.getElementById('profileLifespan');
+  if(b) b.value=D.profile.birthday||'';
+  if(l) l.value=D.profile.lifespan||90;
+}
 function closeSettings(){ document.getElementById('settingsOverlay').style.display='none'; }
 
 /* ================= 入出力 ================= */
