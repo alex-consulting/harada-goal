@@ -2585,7 +2585,6 @@ function renderTodayTimeline(){
                  :`<span class="kquad" style="background:var(--fill);color:var(--faint);border:1px solid var(--line)">—</span>`;
     if(tpTop3EditIdx===i){
       return `<div class="tp3-row">
-        <input type="checkbox" class="tp3-cb" ${isDone?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
         ${badge}
         <select class="tp3-text" onchange="dailyTop3Text('${today}',${i},this.value);tpEndEdit('top3')" autofocus>
           <option value="">-- タスクを選択 --</option>
@@ -2595,7 +2594,6 @@ function renderTodayTimeline(){
       </div>`;
     }
     return `<div class="tp3-view-row">
-      <input type="checkbox" class="tp3-cb" ${isDone?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
       ${badge}
       <span class="tp3-view-text${isDone?' done':''}${!item.text?' empty':''}" onclick="tpStartEdit('top3',${i})">${item.text?esc(item.text):'タップして選択…'}</span>
     </div>`;
