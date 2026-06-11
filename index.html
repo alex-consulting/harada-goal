@@ -2586,9 +2586,15 @@ function renderTodayTimeline(){
     </div>
     <div class="today-point-sec">
       ${(()=>{
-        const hasAny=df.top3.some(t=>t.text);
-        const allDone=hasAny&&df.top3.filter(t=>t.text).every(t=>t.done);
-        const badge=allDone?`<span style="font-size:16px;margin-left:6px">🌸</span><span style="font-size:11px;font-weight:700;color:#34C759;margin-left:2px">合格</span>`:'';
+        const checkedCount=df.top3.filter(t=>t.done).length;
+        const statusMap=[
+          {icon:'👣',text:'最初に1歩を踏み出そう',color:'var(--sub)'},
+          {icon:'📍',text:'この調子',color:'#FF9500'},
+          {icon:'🏁',text:'もうすこし',color:'var(--blue)'},
+          {icon:'🌸',text:'おめでとう',color:'#34C759'},
+        ];
+        const s=statusMap[checkedCount];
+        const badge=`<span style="font-size:14px;margin-left:8px">${s.icon}</span><span style="font-size:11px;font-weight:700;color:${s.color};margin-left:3px">${s.text}</span>`;
         return `<div class="tp-tab${tpTop3Collapsed?' collapsed':''}" onclick="toggleTpTab('top3')">今日の最重要TOP3${badge}<span class="tp-arrow">▾</span></div>`;
       })()}
       <div class="tp-body">${top3Body}</div>
