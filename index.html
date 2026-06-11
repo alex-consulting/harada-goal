@@ -875,6 +875,8 @@ function openSyncModal(){
   document.getElementById("syncModalStatus").textContent="";
 }
 function closeSyncModal(){ document.getElementById("syncModal").style.display="none"; }
+let _syncRemoteData=null;
+function _syncFmt(ts){ return ts ? new Date(ts).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : "データなし"; }
 async function syncModalSave(){
   const code=document.getElementById("syncCodeInput").value.trim();
   const st=document.getElementById("syncModalStatus");
@@ -883,20 +885,26 @@ async function syncModalSave(){
   syncCfg={syncCode:code};
   localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));
   st.textContent="サーバーを確認中…";
-  // まずサーバーを確認：サーバーが新しければダウンロード、古ければアップロード
+  document.getElementById("syncConflict").style.display="none";
   try{
     const res=await fetch(WORKER_URL,{headers:{"X-Sync-Code":code}});
     if(res.ok){
       const remote=await res.json();
       if(remote&&remote._syncAt){
-        const localAt=D._syncAt||0, remoteAt=remote._syncAt||0;
-        if(remoteAt>localAt){
-          // サーバーのほうが新しい → ローカルに上書き＆再読込
-          const {goalImages,...restRemote}=remote;
-          Object.assign(D,restRemote);
+        if(D._syncAt){
+          // 両方データあり → ユーザーに選ばせる
+          _syncRemoteData=remote;
+          document.getElementById("syncServerTime").textContent=_syncFmt(remote._syncAt);
+          document.getElementById("syncLocalTime").textContent=_syncFmt(D._syncAt);
+          document.getElementById("syncConflict").style.display="block";
+          st.textContent="";
+          return;
+        } else {
+          // ローカル未使用 → サーバーから自動ダウンロード
+          const {goalImages,...rest}=remote;
+          Object.assign(D,rest);
           const {goalImages:gi2,...rest2}=D;
-          const lsData={...rest2,dreams:{...rest2.dreams,items:(rest2.dreams?.items||[]).map(({image,...r})=>r)}};
-          localStorage.setItem(LS_KEY,JSON.stringify(lsData));
+          localStorage.setItem(LS_KEY,JSON.stringify({...rest2,dreams:{...rest2.dreams,items:(rest2.dreams?.items||[]).map(({image,...r})=>r)}}));
           st.textContent="✓ サーバーのデータを取得しました。再読込します…";
           setTimeout(()=>location.reload(),800);
           return;
@@ -904,10 +912,29 @@ async function syncModalSave(){
       }
     }
   }catch(e){}
-  // ローカルのほうが新しい（またはサーバー未使用）→ アップロード
+  // サーバー未使用 → ローカルをアップロード
   D._syncAt=Date.now();
   await syncPushNow();
   st.textContent="✓ 設定完了・同期しました";
+}
+async function syncUseServer(){
+  const st=document.getElementById("syncModalStatus");
+  document.getElementById("syncConflict").style.display="none";
+  st.textContent="サーバーのデータを適用中…";
+  const {goalImages,...rest}=_syncRemoteData;
+  Object.assign(D,rest);
+  const {goalImages:gi2,...rest2}=D;
+  localStorage.setItem(LS_KEY,JSON.stringify({...rest2,dreams:{...rest2.dreams,items:(rest2.dreams?.items||[]).map(({image,...r})=>r)}}));
+  st.textContent="✓ 取得完了。再読込します…";
+  setTimeout(()=>location.reload(),800);
+}
+async function syncUseLocal(){
+  const st=document.getElementById("syncModalStatus");
+  document.getElementById("syncConflict").style.display="none";
+  st.textContent="このデバイスのデータをアップロード中…";
+  D._syncAt=Date.now();
+  await syncPushNow();
+  st.textContent="✓ アップロード完了";
 }
 // ---- /Cloudflare同期 ----
 function toast(msg){
@@ -2585,7 +2612,22 @@ document.getElementById("saveState").textContent = localStorage.getItem(LS_KEY) 
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">同期コード <span style="font-weight:400;color:var(--sub)">（4文字以上、自由に決めてOK）</span></div>
       <input id="syncCodeInput" type="text" placeholder="例: myvisgo2024" style="width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;font-size:15px;font-family:inherit">
     </div>
-    <div id="syncModalStatus" style="font-size:13px;color:var(--blue);min-height:20px;margin-bottom:14px"></div>
+    <div id="syncModalStatus" style="font-size:13px;color:var(--blue);min-height:20px;margin-bottom:6px"></div>
+    <div id="syncConflict" style="display:none;margin-bottom:14px;background:#fffbea;border:1.5px solid #f5a623;border-radius:10px;padding:12px">
+      <div style="font-size:13px;font-weight:700;color:#b07a00;margin-bottom:10px">⚠ 両方にデータがあります。どちらを使いますか？</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:#fff;border:1.5px solid var(--blue);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">☁ サーバー（別の端末）</div>
+          <div id="syncServerTime" style="font-size:12px;color:var(--sub);margin-bottom:8px"></div>
+          <button onclick="syncUseServer()" style="width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px 4px;font-size:13px;font-weight:700;cursor:pointer">こちらを使う</button>
+        </div>
+        <div style="flex:1;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">📱 このデバイス</div>
+          <div id="syncLocalTime" style="font-size:12px;color:var(--sub);margin-bottom:8px"></div>
+          <button onclick="syncUseLocal()" style="width:100%;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:7px 4px;font-size:13px;font-weight:700;cursor:pointer">こちらを使う</button>
+        </div>
+      </div>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="syncModalSave()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">保存・同期</button>
       <button onclick="closeSyncModal()" style="background:#f0f2f6;color:var(--text);border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer">閉じる</button>
