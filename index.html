@@ -897,6 +897,7 @@ async function syncModalSave(){
           document.getElementById("syncServerTime").textContent=_syncFmt(remote._syncAt);
           document.getElementById("syncLocalTime").textContent=_syncFmt(D._syncAt);
           document.getElementById("syncConflict").style.display="block";
+          document.getElementById("syncSaveBtnRow").style.display="none";
           st.textContent="";
           return;
         } else {
@@ -920,6 +921,7 @@ async function syncModalSave(){
 async function syncUseServer(){
   const st=document.getElementById("syncModalStatus");
   document.getElementById("syncConflict").style.display="none";
+  document.getElementById("syncSaveBtnRow").style.display="flex";
   st.textContent="サーバーのデータを適用中…";
   const {goalImages,...rest}=_syncRemoteData;
   Object.assign(D,rest);
@@ -931,10 +933,12 @@ async function syncUseServer(){
 async function syncUseLocal(){
   const st=document.getElementById("syncModalStatus");
   document.getElementById("syncConflict").style.display="none";
+  document.getElementById("syncSaveBtnRow").style.display="flex";
   st.textContent="このデバイスのデータをアップロード中…";
   D._syncAt=Date.now();
   await syncPushNow();
   st.textContent="✓ アップロード完了";
+  setTimeout(()=>closeSyncModal(),1200);
 }
 // ---- /Cloudflare同期 ----
 function toast(msg){
@@ -2628,7 +2632,7 @@ document.getElementById("saveState").textContent = localStorage.getItem(LS_KEY) 
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div id="syncSaveBtnRow" style="display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="syncModalSave()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">保存・同期</button>
       <button onclick="closeSyncModal()" style="background:#f0f2f6;color:var(--text);border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer">閉じる</button>
     </div>
