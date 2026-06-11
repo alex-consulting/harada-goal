@@ -1298,10 +1298,9 @@ function renderDreams(){
     const month=sg.yearMonth?String(Number(sg.yearMonth.slice(5)))+'月':'—';
     const catCls=dreamCatClass(d.category);
     return `<div class="sg-card" onclick="openDreamModal('${d.id}')">
-      <span class="dream-cat ${catCls}">${esc(d.category||'')}</span>
+      <span class="dream-cat ${catCls}" style="max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.title)}</span>
       <span class="sg-ym">${month}</span>
       <span class="sg-text">${esc(sg.text)}</span>
-      <span class="sg-dream-label">${esc(d.title)}</span>
     </div>`;
   }
 
