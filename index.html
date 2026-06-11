@@ -2505,6 +2505,7 @@ function dateStr(offsetDays){
 }
 function renderTimeline(targetDate, panelTitle, showNow){
   const tasks=(D.gtd.tasks||[]).filter(t=>(t.deadline||"")===targetDate&&!t.done);
+  const doneTasks=showNow?(D.gtd.tasks||[]).filter(t=>(t.deadline||"")===targetDate&&t.done):[];
   const now=new Date();
   const nowH=now.getHours();
   const d=new Date(targetDate+'T00:00:00');
@@ -2551,8 +2552,14 @@ function renderTimeline(targetDate, panelTitle, showNow){
     ? `<div class="tl-empty-msg">📭 タスクはありません</div>`
     : `<div class="tl-grid">${sortedHours.map(slot).join('')}${unscheduled}</div>`;
 
+  const doneSection=doneTasks.length?`
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line)">
+      <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">✅ 完了済み (${doneTasks.length})</div>
+      <div class="tl-slot-cards">${doneTasks.map(gtdCard).join('')}</div>
+    </div>`:'';
+
   return `<div class="tl-panel">
-    <div class="tl-panel-body">${bodyContent}</div>
+    <div class="tl-panel-body">${bodyContent}${doneSection}</div>
   </div>`;
 }
 function renderTodayTimeline(){
