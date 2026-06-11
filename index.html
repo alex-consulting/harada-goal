@@ -423,6 +423,15 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .tp-tab.collapsed .tp-arrow{transform:rotate(-90deg)}
 .tp-body{padding:8px 2px 4px;overflow:hidden}
 .tp-tab.collapsed+.tp-body{display:none}
+.tp-view-text{font-size:14px;color:var(--navy);line-height:1.55;padding:2px 2px 4px;white-space:pre-wrap;word-break:break-all}
+.tp-view-text.empty{color:var(--faint);font-style:italic}
+.tp-edit-btn{background:none;border:none;color:var(--sub);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;flex:0 0 auto}
+.tp-edit-btn:hover{color:var(--blue)}
+.tp3-view-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);min-width:0}
+.tp3-view-row:last-child{border-bottom:none}
+.tp3-view-text{flex:1;font-size:14px;color:var(--navy);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp3-view-text.done{text-decoration:line-through;color:var(--sub)}
+.tp3-view-text.empty{color:var(--faint);font-style:italic}
 .tp3-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;min-width:0}
 .tp3-row:last-child{margin-bottom:0}
 .today-feeling{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;color:var(--text);background:var(--fill2);line-height:1.55}
@@ -2446,9 +2455,22 @@ function advanceRecurDeadline(t){
 let tlCollapsed=false;
 let tpFeelingCollapsed=false;
 let tpTop3Collapsed=false;
+let tpFeelingEdit=false;
+let tpTop3EditIdx=-1; // 編集中のTOP3行 (-1=非編集)
 function toggleTpTab(key){
   if(key==='feeling') tpFeelingCollapsed=!tpFeelingCollapsed;
   else tpTop3Collapsed=!tpTop3Collapsed;
+  renderGTD();
+}
+function tpStartEdit(key,idx){
+  if(key==='feeling'){ tpFeelingEdit=true; }
+  else { tpTop3EditIdx=idx; }
+  renderGTD();
+  if(key==='feeling') setTimeout(()=>{const el=document.querySelector('.today-feeling');if(el){el.focus();el.selectionStart=el.value.length;}},50);
+}
+function tpEndEdit(key){
+  if(key==='feeling') tpFeelingEdit=false;
+  else tpTop3EditIdx=-1;
   renderGTD();
 }
 function localDateStr(d){
@@ -2519,33 +2541,52 @@ function renderTodayTimeline(){
     df.top3=[0,1,2].map(i=>df.top3&&df.top3[i]?df.top3[i]:{text:'',done:false});
   }
   const todayTasks=(D.gtd.tasks||[]).filter(t=>(t.deadline||'')=== today&&!t.done);
-  const top3HTML=df.top3.map((item,i)=>{
+  // 到達宣言
+  const feelingBody=tpFeelingEdit
+    ?`<div class="tp-body">
+        <textarea class="today-feeling" placeholder="今日１日の終わりにどんな自分になっていたいですか？" oninput="dailyFeelingUpdate('${today}',this.value)">${esc(df.feeling||'')}</textarea>
+        <div style="text-align:right;margin-top:4px"><button onclick="tpEndEdit('feeling')" style="font-size:12px;padding:4px 12px;border:none;border-radius:6px;background:var(--blue);color:#fff;cursor:pointer">完了</button></div>
+      </div>`
+    :`<div class="tp-body" onclick="tpStartEdit('feeling')" style="cursor:text">
+        ${df.feeling
+          ?`<div class="tp-view-text">${esc(df.feeling)}</div>`
+          :`<div class="tp-view-text empty">タップして入力…</div>`}
+      </div>`;
+
+  // TOP3
+  const top3Body=df.top3.map((item,i)=>{
     const task=(D.gtd.tasks||[]).find(t=>t.text===item.text);
     const q=task?gtdQuadrant(task):null;
     const badge=q?`<span class="kquad kquad-${q}">${q}</span>`
                  :`<span class="kquad" style="background:var(--fill);color:var(--faint);border:1px solid var(--line)">—</span>`;
-    return `<div class="tp3-row">
+    if(tpTop3EditIdx===i){
+      return `<div class="tp3-row">
+        <input type="checkbox" class="tp3-cb" ${item.done?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
+        ${badge}
+        <select class="tp3-text" onchange="dailyTop3Text('${today}',${i},this.value);tpEndEdit('top3')" autofocus>
+          <option value="">-- タスクを選択 --</option>
+          ${todayTasks.map(t=>`<option value="${esc(t.text)}" ${item.text===t.text?'selected':''}>${esc(t.text)}</option>`).join('')}
+          ${item.text&&!todayTasks.find(t=>t.text===item.text)?`<option value="${esc(item.text)}" selected>${esc(item.text)}</option>`:''}
+        </select>
+        <button class="tp-edit-btn" onclick="tpEndEdit('top3')">✕</button>
+      </div>`;
+    }
+    return `<div class="tp3-view-row">
       <input type="checkbox" class="tp3-cb" ${item.done?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
       ${badge}
-      <select class="tp3-text ${item.done?'tp3-done':''}" onchange="dailyTop3Text('${today}',${i},this.value)">
-        <option value="">-- タスクを選択 --</option>
-        ${todayTasks.map(t=>`<option value="${esc(t.text)}" ${item.text===t.text?'selected':''}>${esc(t.text)}</option>`).join('')}
-        ${item.text&&!todayTasks.find(t=>t.text===item.text)?`<option value="${esc(item.text)}" selected>${esc(item.text)}</option>`:''}
-      </select>
+      <span class="tp3-view-text${item.done?' done':''}${!item.text?' empty':''}" onclick="tpStartEdit('top3',${i})">${item.text?esc(item.text):'タップして選択…'}</span>
+      <button class="tp-edit-btn" onclick="tpStartEdit('top3',${i})">✏️</button>
     </div>`;
   }).join('');
+
   const panel=`<div class="today-point">
     <div class="today-point-sec">
       <div class="tp-tab${tpFeelingCollapsed?' collapsed':''}" onclick="toggleTpTab('feeling')">今日の到達宣言<span class="tp-arrow">▾</span></div>
-      <div class="tp-body">
-        <textarea class="today-feeling" placeholder="今日１日の終わりにどんな自分になっていたいですか？" oninput="dailyFeelingUpdate('${today}',this.value)">${esc(df.feeling||'')}</textarea>
-      </div>
+      ${feelingBody}
     </div>
     <div class="today-point-sec">
       <div class="tp-tab${tpTop3Collapsed?' collapsed':''}" onclick="toggleTpTab('top3')">今日の最重要TOP3<span class="tp-arrow">▾</span></div>
-      <div class="tp-body">
-        ${top3HTML}
-      </div>
+      <div class="tp-body">${top3Body}</div>
     </div>
   </div>`;
   return panel+renderTimeline(today,'☀️ 1日をスタート！',true);
