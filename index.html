@@ -2576,7 +2576,6 @@ function renderTodayTimeline(){
       <input type="checkbox" class="tp3-cb" ${item.done?'checked':''} onchange="dailyTop3Toggle('${today}',${i})">
       ${badge}
       <span class="tp3-view-text${item.done?' done':''}${!item.text?' empty':''}" onclick="tpStartEdit('top3',${i})">${item.text?esc(item.text):'タップして選択…'}</span>
-      <button class="tp-edit-btn" onclick="tpStartEdit('top3',${i})">✏️</button>
     </div>`;
   }).join('');
 
@@ -2586,7 +2585,12 @@ function renderTodayTimeline(){
       ${feelingBody}
     </div>
     <div class="today-point-sec">
-      <div class="tp-tab${tpTop3Collapsed?' collapsed':''}" onclick="toggleTpTab('top3')">今日の最重要TOP3<span class="tp-arrow">▾</span></div>
+      ${(()=>{
+        const hasAny=df.top3.some(t=>t.text);
+        const allDone=hasAny&&df.top3.filter(t=>t.text).every(t=>t.done);
+        const badge=allDone?`<span style="font-size:16px;margin-left:6px">🎉</span><span style="font-size:11px;font-weight:700;color:#34C759;margin-left:2px">完了</span>`:'';
+        return `<div class="tp-tab${tpTop3Collapsed?' collapsed':''}" onclick="toggleTpTab('top3')">今日の最重要TOP3${badge}<span class="tp-arrow">▾</span></div>`;
+      })()}
       <div class="tp-body">${top3Body}</div>
     </div>
   </div>`;
