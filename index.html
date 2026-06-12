@@ -146,6 +146,10 @@ table.an textarea{border:none;background:transparent;padding:2px;min-height:42px
 .vhead h1{font-size:20px;color:var(--navy);margin:0 0 8px}
 .vmeta{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13.5px}
 .vmeta b{color:var(--sub);font-weight:700;margin-right:5px;font-size:12px}
+.vhead-prog{margin-top:12px;cursor:default}
+.vhead-prog-bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.vhead-prog-bar>div{height:100%;background:var(--blue);border-radius:4px;transition:width .4s}
+.vhead-prog-lbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub);margin-top:4px}
 .vsec{margin-bottom:22px}
 .vsec h3{font-size:14px;color:var(--card);background:var(--blue);display:inline-block;padding:4px 14px;border-radius:6px;margin:0 0 10px}
 .vsec p{margin:4px 0;line-height:1.7}
@@ -722,14 +726,16 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
         <div style="font-size:11px;color:var(--sub);margin-top:8px">スキャンするとログイン済みで開きます</div>
       </div>
       <p class="settings-section">データ管理</p>
-      <button class="settings-btn" onclick="exportJSON()">📤 バックアップ</button>
-      <button class="settings-btn" onclick="document.getElementById('impFile').click()">📥 復元</button>
+      <div style="display:flex;gap:8px">
+        <button class="settings-btn" style="flex:1" onclick="exportJSON()">📤 バックアップ</button>
+        <button class="settings-btn" style="flex:1" onclick="document.getElementById('impFile').click()">📥 復元</button>
+      </div>
       <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(event);closeSettings()">
       <p class="settings-section">ToDo設定</p>
       <button class="settings-btn" onclick="document.getElementById('nozbeFile').click()">📥 Nozbeから移行</button>
       <input type="file" id="nozbeFile" accept=".zip" style="display:none" onchange="importNozbe(event);closeSettings()">
       <p class="settings-section">夢リスト</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0">
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
         <div>
           <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">生年月日</label>
           <input type="date" id="profileBirthday" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.profile.birthday=this.value;save()">
@@ -1956,6 +1962,19 @@ function renderSheetView(){
         <span><b>目標達成日</b>${esc(fmtDate(D.meta.targetDate))||"—"}</span>
         <span><b>更新日</b>${esc(fmtDate(D.meta.updateDate))||"—"}</span>
       </div>
+      ${(()=>{
+        const wd=toDateInput(D.meta.writeDate), td=toDateInput(D.meta.targetDate);
+        if(!wd||!td) return '';
+        const wMs=new Date(wd+'T00:00:00').getTime(), tMs=new Date(td+'T00:00:00').getTime(), now=Date.now();
+        const total=tMs-wMs; if(total<=0) return '';
+        const pct=Math.max(0,Math.min(100,Math.round((now-wMs)/total*100)));
+        const remain=Math.ceil((tMs-now)/(86400000));
+        const remainTxt=remain>0?`残り${remain}日`:'期限到達';
+        return `<div class="vhead-prog" onclick="event.stopPropagation()">
+          <div class="vhead-prog-bar"><div style="width:${pct}%"></div></div>
+          <div class="vhead-prog-lbl"><span>${pct}% 達成</span><span>${remainTxt}</span></div>
+        </div>`;
+      })()}
     </div>
     <div class="vsec"><h3 onclick="openSheetSection('service')">奉仕活動</h3>
       <p><b>家族：</b>${nl2br(D.service.family)||"—"}</p>
