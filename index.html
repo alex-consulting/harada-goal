@@ -565,7 +565,7 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .settings-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;color:var(--navy)}
 .settings-hd button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--sub);line-height:1}
 .settings-body{padding:18px}
-.settings-section{font-size:11.5px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px}
+.settings-section{font-size:13px;font-weight:700;color:var(--navy);letter-spacing:.02em;margin:0 0 8px;padding-bottom:4px;border-bottom:2px solid var(--blue)}
 .settings-section+.settings-section{margin-top:18px}
 .settings-btn{display:flex;align-items:center;gap:10px;width:100%;background:var(--fill);border:1px solid var(--line);border-radius:9px;padding:11px 14px;font-size:13.5px;color:var(--navy);cursor:pointer;margin-bottom:8px;text-align:left}
 .settings-btn:hover{background:var(--fill)}
@@ -667,6 +667,10 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
     <input id="loginPwInput" type="password" placeholder="パスワードを入力（8文字以上）" autocomplete="current-password"
       onkeydown="if(event.key==='Enter'&&!event.isComposing)doLogin()">
     <div id="loginError"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-bottom:4px;cursor:pointer">
+      <input type="checkbox" id="loginStayChecked" style="width:16px;height:16px;cursor:pointer" checked>
+      ログインしたままにする
+    </label>
     <button id="loginBtn" onclick="doLogin()">ログイン</button>
   </div>
 </div>
@@ -768,7 +772,7 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 <nav>
   <button id="tb-gtd" onclick="showTab('gtd')"><span class="tab-icon">✅</span>ToDo</button>
   <button id="tb-dream" onclick="showTab('dream')"><span class="tab-icon">🏝️</span>夢リスト</button>
-  <button id="tb-sheet" onclick="showTab('sheet')"><span class="tab-icon">🎯</span>年間目標シート</button>
+  <button id="tb-sheet" onclick="showTab('sheet')"><span class="tab-icon">🎯</span>年間目標</button>
   <button id="tb-ow" onclick="showTab('ow')"><span class="tab-icon">🪟</span>OW64</button>
 </nav>
 
@@ -1143,7 +1147,8 @@ const LOGIN_TTL=7*24*60*60*1000; // 7日間
 function checkLogin(){
   // セッションが有効なら（7日以内）スキップ
   const loginAt=parseInt(localStorage.getItem(LOGIN_SESSION_KEY)||'0',10);
-  if(syncCfg.syncId&&syncCfg.syncPassword&&loginAt&&Date.now()-loginAt<LOGIN_TTL) return;
+  const savedTtl=parseInt(localStorage.getItem('visgo_login_ttl')||String(LOGIN_TTL),10);
+  if(syncCfg.syncId&&syncCfg.syncPassword&&loginAt&&Date.now()-loginAt<savedTtl) return;
   document.getElementById('loginOverlay').style.display='flex';
   document.body.style.overflow='hidden';
   const isFirst=!syncCfg.syncId||!syncCfg.syncPassword;
@@ -1187,7 +1192,10 @@ async function doLogin(){
     }catch(e){}
     if(dataLoadedFromStorage) await syncPushNow();
   }
+  const stayChecked=document.getElementById('loginStayChecked');
+  const ttl=(!stayChecked||stayChecked.checked)?LOGIN_TTL:60*60*1000;
   localStorage.setItem(LOGIN_SESSION_KEY, Date.now());
+  localStorage.setItem('visgo_login_ttl', ttl);
   document.getElementById('loginOverlay').style.display='none';
   document.body.style.overflow='';
 }
@@ -1993,9 +2001,9 @@ function renderSheetView(){
     <div class="vhead" onclick="openSheetSection('meta')" title="クリックして編集">
       <h1 class="print-only">年間目標シート</h1>
       <div class="vmeta">
-        <span><b>氏名</b>${esc(D.meta.name)||"—"}</span>
-        <span><b>記入日</b>${esc(fmtDate(D.meta.writeDate))||"—"}</span>
-        <span><b>目標達成日</b>${esc(fmtDate(D.meta.targetDate))||"—"}</span>
+        <span class="print-only"><b>氏名</b>${esc(D.meta.name)||"—"}</span>
+        <span class="print-only"><b>記入日</b>${esc(fmtDate(D.meta.writeDate))||"—"}</span>
+        <span class="print-only"><b>目標達成日</b>${esc(fmtDate(D.meta.targetDate))||"—"}</span>
         <span><b>更新日</b>${esc(fmtDate(D.meta.updateDate))||"—"}</span>
       </div>
     </div>
