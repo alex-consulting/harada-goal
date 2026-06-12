@@ -2602,8 +2602,8 @@ function renderTodayTimeline(){
     }
     return `<div class="tp3-view-row">
       ${badge}
+      ${isDone?`<span style="font-size:18px;flex:0 0 auto">✌️</span>`:''}
       <span class="tp3-view-text${isDone?' done':''}${!item.text?' empty':''}" onclick="tpStartEdit('top3',${i})">${item.text?esc(item.text):'タップして選択…'}</span>
-      ${isDone?`<span style="font-size:18px">✌️</span>`:''}
     </div>`;
   }).join('');
 
