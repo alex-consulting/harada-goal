@@ -1089,8 +1089,8 @@ async function syncModalSave(){
   const id=document.getElementById("syncIdInput").value.trim();
   const pw=document.getElementById("syncPasswordInput").value.trim();
   const st=document.getElementById("syncModalStatus");
-  if(id.length<2){ st.textContent="⚠ IDは2文字以上にしてください"; return; }
-  if(pw.length<4){ st.textContent="⚠ パスワードは4文字以上にしてください"; return; }
+  if(id.length<8){ st.textContent="⚠ IDは8文字以上にしてください"; return; }
+  if(pw.length<8){ st.textContent="⚠ パスワードは8文字以上にしてください"; return; }
   if(WORKER_URL.includes('CHANGEME')){ st.textContent="⚠ サーバーが未設定です（開発者にお問い合わせください）"; return; }
   syncCfg={syncId:id,syncPassword:pw};
   localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));
@@ -3221,11 +3221,11 @@ document.addEventListener('visibilitychange',()=>{
       IDとパスワードを決めてください。同じID・パスワードを別の端末で入力するとデータが自動で同期されます。アカウント不要・無料で使えます。
     </div>
     <div style="margin-bottom:10px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">ID <span style="font-weight:400;color:var(--sub)">（2文字以上）</span></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">ID <span style="font-weight:400;color:var(--sub)">（8文字以上）</span></div>
       <input id="syncIdInput" type="text" placeholder="例: moriya" autocomplete="username" style="width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;font-size:15px;font-family:inherit">
     </div>
     <div style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">パスワード <span style="font-weight:400;color:var(--sub)">（4文字以上）</span></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">パスワード <span style="font-weight:400;color:var(--sub)">（8文字以上）</span></div>
       <input id="syncPasswordInput" type="password" placeholder="パスワードを入力" autocomplete="current-password" style="width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;font-size:15px;font-family:inherit">
     </div>
     <div id="syncModalStatus" style="font-size:13px;color:var(--blue);min-height:20px;margin-bottom:6px"></div>
