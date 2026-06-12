@@ -653,10 +653,12 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 <div id="loginOverlay" style="display:none">
   <div id="loginBox">
     <img src="visgo-logo.png" alt="VISGO">
+    <div id="loginTitle" style="font-size:18px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:8px">ログイン</div>
+    <div id="loginNote" style="font-size:12px;color:var(--sub);text-align:center;margin-bottom:16px;line-height:1.5"></div>
     <div class="login-lbl">ID</div>
-    <input id="loginIdInput" type="text" placeholder="IDを入力" autocomplete="username">
+    <input id="loginIdInput" type="text" placeholder="IDを入力（8文字以上）" autocomplete="username">
     <div class="login-lbl">パスワード</div>
-    <input id="loginPwInput" type="password" placeholder="パスワードを入力" autocomplete="current-password"
+    <input id="loginPwInput" type="password" placeholder="パスワードを入力（8文字以上）" autocomplete="current-password"
       onkeydown="if(event.key==='Enter'&&!event.isComposing)doLogin()">
     <div id="loginError"></div>
     <button id="loginBtn" onclick="doLogin()">ログイン</button>
@@ -712,7 +714,7 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
     </div>
     <div class="settings-body">
       <p class="settings-section">同期</p>
-      <button class="settings-btn" onclick="closeSettings();openSyncModal()">☁ 同期設定</button>
+      <button class="settings-btn" onclick="closeSettings();syncNow()">☁ 今すぐ同期</button>
       <p class="settings-section">データ管理</p>
       <button class="settings-btn" onclick="exportJSON()">📤 バックアップ</button>
       <button class="settings-btn" onclick="document.getElementById('impFile').click()">📥 復元</button>
@@ -1097,23 +1099,68 @@ function setSyncStatus(msg){
 }
 // ---- ログイン ----
 function checkLogin(){
-  if(!syncCfg.syncId||!syncCfg.syncPassword) return; // 同期未設定なら不要
+  // 常にログイン画面を表示（初回＝登録、以降＝認証）
   document.getElementById('loginOverlay').style.display='flex';
   document.body.style.overflow='hidden';
+  const isFirst=!syncCfg.syncId||!syncCfg.syncPassword;
+  document.getElementById('loginTitle').textContent=isFirst?'はじめる':'ログイン';
+  document.getElementById('loginBtn').textContent=isFirst?'登録して同期':'ログイン';
+  document.getElementById('loginNote').textContent=isFirst?'IDとパスワードを決めてください（各8文字以上）。別の端末でも同じIDとパスワードを使えます。':'';
   setTimeout(()=>document.getElementById('loginIdInput').focus(),100);
 }
-function doLogin(){
+async function doLogin(){
   const id=document.getElementById('loginIdInput').value.trim();
   const pw=document.getElementById('loginPwInput').value;
   const err=document.getElementById('loginError');
-  if(id===syncCfg.syncId&&pw===syncCfg.syncPassword){
-    document.getElementById('loginOverlay').style.display='none';
-    document.body.style.overflow='';
-  } else {
+  err.textContent='';
+  if(id.length<8){ err.textContent='IDは8文字以上にしてください'; return; }
+  if(pw.length<8){ err.textContent='パスワードは8文字以上にしてください'; return; }
+  const isFirst=!syncCfg.syncId||!syncCfg.syncPassword;
+  if(!isFirst&&(id!==syncCfg.syncId||pw!==syncCfg.syncPassword)){
     err.textContent='IDまたはパスワードが違います';
     document.getElementById('loginPwInput').value='';
     document.getElementById('loginPwInput').focus();
+    return;
   }
+  // 初回 or 認証OK → 認証情報を保存して同期
+  document.getElementById('loginBtn').disabled=true;
+  document.getElementById('loginBtn').textContent='同期中…';
+  syncCfg={syncId:id,syncPassword:pw};
+  localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));
+  if(!WORKER_URL.includes('CHANGEME')){
+    try{
+      const res=await fetch(WORKER_URL,{headers:{"X-Sync-Code":getSyncCode()}});
+      if(res.ok){
+        const remote=await res.json();
+        if(remote&&remote._syncAt){
+          if(D._syncAt&&remote._syncAt>D._syncAt){
+            await _applyRemoteData(remote);
+          } else if(!D._syncAt){
+            await _applyRemoteData(remote);
+          }
+        }
+      }
+    }catch(e){}
+    if(dataLoadedFromStorage) await syncPushNow();
+  }
+  document.getElementById('loginOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+async function syncNow(){
+  if(!getSyncCode()){ setSyncStatus("⚠ ログインが必要です"); return; }
+  setSyncStatus("⬆⬇ 同期中…");
+  try{
+    const res=await fetch(WORKER_URL,{headers:{"X-Sync-Code":getSyncCode()}});
+    if(res.ok){
+      const remote=await res.json();
+      if(remote&&remote._syncAt&&(!D._syncAt||remote._syncAt>D._syncAt)){
+        await _applyRemoteData(remote);
+        setSyncStatus("☁ 同期済み");
+        renderGTD(); return;
+      }
+    }
+  }catch(e){}
+  await syncPushNow();
 }
 function openSyncModal(){
   document.getElementById("syncModal").style.display="flex";
