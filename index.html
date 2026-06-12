@@ -640,7 +640,8 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
   .gf-color-dot{border-color:rgba(255,255,255,.22)}
   textarea:focus,input:focus{background:var(--fill2)}
 }
-@media print{nav,header .hbtn,#saveState{display:none}.card{break-inside:avoid}}
+@media print{nav,header .hbtn,#saveState{display:none}.card{break-inside:avoid}.print-only{display:block!important}}
+.print-only{display:none}
 #loginOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px}
 #loginBox{background:var(--card);border-radius:20px;padding:32px 28px;width:min(380px,100%);box-shadow:0 8px 40px rgba(0,0,0,.15)}
 #loginBox img{height:44px;display:block;margin:0 auto 28px}
@@ -734,6 +735,21 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
       <p class="settings-section">ToDo設定</p>
       <button class="settings-btn" onclick="document.getElementById('nozbeFile').click()">📥 Nozbeから移行</button>
       <input type="file" id="nozbeFile" accept=".zip" style="display:none" onchange="importNozbe(event);closeSettings()">
+      <p class="settings-section">年間目標シート</p>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">氏名</label>
+          <input type="text" id="metaName" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.meta.name=this.value;save()">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">記入日</label>
+          <input type="date" id="metaWriteDate" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.meta.writeDate=this.value;save()">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px">目標達成日</label>
+          <input type="date" id="metaTargetDate" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px" onchange="D.meta.targetDate=this.value;save()">
+        </div>
+      </div>
       <p class="settings-section">夢リスト</p>
       <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
         <div>
@@ -752,7 +768,7 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 <nav>
   <button id="tb-gtd" onclick="showTab('gtd')"><span class="tab-icon">✅</span>ToDo</button>
   <button id="tb-dream" onclick="showTab('dream')"><span class="tab-icon">🏝️</span>夢リスト</button>
-  <button id="tb-sheet" onclick="showTab('sheet')"><span class="tab-icon">🎯</span>年間目標</button>
+  <button id="tb-sheet" onclick="showTab('sheet')"><span class="tab-icon">🎯</span>年間目標シート</button>
   <button id="tb-ow" onclick="showTab('ow')"><span class="tab-icon">🪟</span>OW64</button>
 </nav>
 
@@ -1801,7 +1817,7 @@ function renderSheetEdit(){
   const a=D.analysis;
   root.innerHTML=`
   <div class="page-head">
-    <div><h1 class="ph-title">🎯 年間目標</h1><p class="ph-sub">編集モード</p></div>
+    <div><h1 class="ph-title">🎯 年間目標シート</h1><p class="ph-sub">編集モード</p></div>
     <button class="ph-action" onclick="setSheetMode('view')">✓ 保存して表示</button>
   </div>
   <div class="mob-chips">
@@ -1941,7 +1957,7 @@ function renderSheetView(){
   const zoneNames=["最高の目標","中間の目標","絶対できる目標","今回の目標"];
   root.innerHTML=`
   <div class="page-head dream-page-head">
-    <div><h1 class="ph-title">🎯 年間目標</h1><p class="ph-sub">心身・スキル・健康・生活習慣を整える。</p></div>
+    <div><h1 class="ph-title">🎯 年間目標シート</h1><p class="ph-sub">心身・スキル・健康・生活習慣を整える。</p></div>
     ${(()=>{
       const wd=toDateInput(D.meta.writeDate), td=toDateInput(D.meta.targetDate);
       if(!wd||!td) return '';
@@ -1975,7 +1991,7 @@ function renderSheetView(){
   <div class="gtd-main">
   <div class="vsheet">
     <div class="vhead" onclick="openSheetSection('meta')" title="クリックして編集">
-      <h1>年間目標シート ✏️</h1>
+      <h1 class="print-only">年間目標シート</h1>
       <div class="vmeta">
         <span><b>氏名</b>${esc(D.meta.name)||"—"}</span>
         <span><b>記入日</b>${esc(fmtDate(D.meta.writeDate))||"—"}</span>
@@ -3180,6 +3196,12 @@ function openSettings(){
   const l=document.getElementById('profileLifespan');
   if(b) b.value=D.profile.birthday||'';
   if(l) l.value=D.profile.lifespan||90;
+  const mn=document.getElementById('metaName');
+  const mw=document.getElementById('metaWriteDate');
+  const mt=document.getElementById('metaTargetDate');
+  if(mn) mn.value=D.meta.name||'';
+  if(mw) mw.value=toDateInput(D.meta.writeDate)||'';
+  if(mt) mt.value=toDateInput(D.meta.targetDate)||'';
   // PCのみQRコード表示
   const qrSec=document.getElementById('qrSection');
   if(qrSec&&syncCfg.syncId&&syncCfg.syncPassword&&window.innerWidth>700){
