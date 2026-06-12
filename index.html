@@ -899,6 +899,8 @@ const SYNC_KEY="visgo_sync_v1";
 const WORKER_URL="https://visgo-sync.moriyamakoto.workers.dev";
 let syncCfg=JSON.parse(localStorage.getItem(SYNC_KEY)||"null")||{syncCode:""};
 let D;
+// キャッシュクリア検出：起動時にlocalStorageにデータがあったか記録
+const dataLoadedFromStorage = !!localStorage.getItem(LS_KEY);
 try{ D = JSON.parse(localStorage.getItem(LS_KEY)) || structuredClone(DEFAULT_DATA); }
 catch(e){ D = structuredClone(DEFAULT_DATA); }
 if(!Array.isArray(D.goalImages)) D.goalImages=[]; // 旧データ互換
@@ -1016,6 +1018,11 @@ async function _applyRemoteData(remote){
 }
 async function syncPushNow(){
   if(!syncCfg.syncCode||WORKER_URL.includes('CHANGEME')) return;
+  // キャッシュクリア直後（localStorageが空だった起動）はサーバーを上書きしない
+  if(!dataLoadedFromStorage){
+    setSyncStatus("⚠ ローカルデータなし—上書き保護中");
+    return;
+  }
   setSyncStatus("⬆ 同期中…");
   const oldSyncAt=D._syncAt;
   const now=Date.now();
@@ -3133,7 +3140,13 @@ document.getElementById("saveState").textContent = localStorage.getItem(LS_KEY) 
     const lsData={...rest,dreams:{...rest.dreams,items:(rest.dreams?.items||[]).map(({image,...r})=>r)}};
     localStorage.setItem(LS_KEY,JSON.stringify(lsData));
   }catch(e){}
-  syncPull();
+  // キャッシュクリア後はpullを優先（pushは保護済み）
+  if(!dataLoadedFromStorage && syncCfg.syncCode){
+    setSyncStatus("⬇ データ復元中…");
+    syncPull();
+  } else {
+    syncPull();
+  }
   // バージョン表示
   const vl=document.getElementById("versionLabel");
   if(vl) vl.textContent="v"+APP_VERSION;
