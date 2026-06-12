@@ -1098,8 +1098,12 @@ function setSyncStatus(msg){
   if(el) el.textContent=msg;
 }
 // ---- ログイン ----
+const LOGIN_SESSION_KEY='visgo_login_at';
+const LOGIN_TTL=7*24*60*60*1000; // 7日間
 function checkLogin(){
-  // 常にログイン画面を表示（初回＝登録、以降＝認証）
+  // セッションが有効なら（7日以内）スキップ
+  const loginAt=parseInt(localStorage.getItem(LOGIN_SESSION_KEY)||'0',10);
+  if(syncCfg.syncId&&syncCfg.syncPassword&&loginAt&&Date.now()-loginAt<LOGIN_TTL) return;
   document.getElementById('loginOverlay').style.display='flex';
   document.body.style.overflow='hidden';
   const isFirst=!syncCfg.syncId||!syncCfg.syncPassword;
@@ -1143,6 +1147,7 @@ async function doLogin(){
     }catch(e){}
     if(dataLoadedFromStorage) await syncPushNow();
   }
+  localStorage.setItem(LOGIN_SESSION_KEY, Date.now());
   document.getElementById('loginOverlay').style.display='none';
   document.body.style.overflow='';
 }
