@@ -749,7 +749,10 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
         GoogleカレンダーのiCal URL（シークレット）を登録すると、今日・明日のタイムラインに予定が表示されます。
       </div>
       <div id="gcalUrlList"></div>
-      <button class="settings-btn" onclick="gcalAddUrl()" style="margin-top:6px">＋ カレンダーを追加</button>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <input type="url" id="gcalUrlInput" placeholder="https://calendar.google.com/calendar/ical/..." style="flex:1;font-size:12px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--fill);color:var(--text)">
+        <button class="settings-btn" onclick="gcalAddUrl()" style="white-space:nowrap;flex:0 0 auto">追加</button>
+      </div>
       <p class="settings-section">データ管理</p>
       <div style="display:flex;gap:8px">
         <button class="settings-btn" style="flex:1" onclick="exportJSON()">📤 バックアップ</button>
@@ -3420,11 +3423,13 @@ function gcalRenderUrls(){
     </div>`).join('');
 }
 function gcalAddUrl(){
-  const u=prompt('GoogleカレンダーのiCal URL（シークレット）を貼り付けてください\n\n取得方法：Googleカレンダー → 設定 → カレンダーの統合 → 「非公開のアドレス（iCal形式）」');
-  if(!u||!u.startsWith('https://')) return;
-  gcalUrls.push(u.trim());
+  const inp=document.getElementById('gcalUrlInput');
+  const u=(inp?inp.value:'').trim();
+  if(!u||!u.startsWith('https://')){ if(inp) inp.focus(); return; }
+  gcalUrls.push(u);
   saveGcalUrls();
   _gcalCache={data:[],fetchedAt:0};
+  if(inp) inp.value='';
   gcalRenderUrls();
 }
 function gcalDelUrl(i){
