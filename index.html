@@ -977,13 +977,7 @@ const LS_KEY="haradaApp_v1";
 const SYNC_KEY="visgo_sync_v1";
 const WORKER_URL="https://visgo-sync.moriyamakoto.workers.dev";
 const GCAL_KEY="visgo_gcal_v1"; // migration only
-// D.gcalUrls が正規ストア（sync対象）。旧keyからマイグレーション
-let gcalUrls=(()=>{
-  if(Array.isArray(D.gcalUrls)&&D.gcalUrls.length) return D.gcalUrls;
-  const old=JSON.parse(localStorage.getItem(GCAL_KEY)||'[]');
-  if(old.length){ D.gcalUrls=old; localStorage.removeItem(GCAL_KEY); }
-  return D.gcalUrls||(D.gcalUrls=[]);
-})();
+let gcalUrls=[]; // D定義後に初期化
 function saveGcalUrls(){ D.gcalUrls=gcalUrls; save(); }
 
 /* ===== iCal パーサー ===== */
@@ -1074,6 +1068,13 @@ catch(e){ D = structuredClone(DEFAULT_DATA); }
 if(!Array.isArray(D.goalImages)) D.goalImages=[]; // 旧データ互換
 if(!D.gtd||!Array.isArray(D.gtd.tasks)) D.gtd={tasks:[],nextId:1}; // GTDタスク（PC版）
 if(!D.dreams||!Array.isArray(D.dreams.items)) D.dreams={items:[],nextId:1}; // 夢リスト
+// gcalUrls: D.gcalUrls が正規ストア（sync対象）。旧keyからマイグレーション
+(()=>{
+  if(Array.isArray(D.gcalUrls)&&D.gcalUrls.length){ gcalUrls=D.gcalUrls; return; }
+  const old=JSON.parse(localStorage.getItem(GCAL_KEY)||'[]');
+  if(old.length){ localStorage.removeItem(GCAL_KEY); D.gcalUrls=old; gcalUrls=old; return; }
+  D.gcalUrls=[]; gcalUrls=[];
+})();
 if(!D.gtd.projectColors) D.gtd.projectColors={}; // プロジェクトカラー
 if(!Array.isArray(D.gtd.projects)) D.gtd.projects=[];
 if(!Array.isArray(D.gtd.categories)) D.gtd.categories=[];
