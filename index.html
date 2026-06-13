@@ -472,7 +472,9 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
 .tl-grid{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
 .tl-slot{display:flex;align-items:flex-start;gap:10px;min-width:0}
 .tl-slot.tl-now .tl-slot-time{color:var(--red)}
-.tl-slot.tl-now .tl-slot-line{background:var(--red);height:2px}
+.tl-now-line{display:flex;align-items:center;gap:6px;margin:6px 0 2px}
+.tl-now-line-bar{flex:1;height:2px;background:var(--red);border-radius:1px}
+.tl-now-line-time{font-size:11px;font-weight:700;color:var(--red);white-space:nowrap}
 .tl-slot-time{flex:0 0 46px;padding-top:9px;font-size:12px;font-weight:700;color:var(--sub);text-align:right;white-space:nowrap}
 .tl-slot-time.tl-unscheduled{color:var(--navy);font-size:11px;line-height:1.4}
 .tl-slot-body{flex:1;min-width:0}
@@ -2852,16 +2854,34 @@ function renderTimeline(targetDate, panelTitle, showNow, gcalEvs){
     const items=byHour[h]||[];
     const gcalItems=gcalByHour[h]||[];
     const isNow=(showNow&&h===nowH);
-    const timeLabel=isNow
-      ? `${String(h).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
-      : `${String(h).padStart(2,'0')}:00`;
+    const timeLabel=`${String(h).padStart(2,'0')}:00`;
+    const nowM=now.getMinutes();
+    const nowHM=`${String(h).padStart(2,'0')}:${String(nowM).padStart(2,'0')}`;
+
+    let bodyHtml;
+    if(isNow){
+      // イベントを分単位でソートして現在時刻の前後に分割
+      const sortedGcal=[...gcalItems].sort((a,b)=>a.start.getMinutes()-b.start.getMinutes());
+      const sortedTasks=[...items].sort((a,b)=>(a.deadlineTime||'').localeCompare(b.deadlineTime||''));
+      const pastGcal=sortedGcal.filter(ev=>ev.start.getMinutes()<=nowM);
+      const futureGcal=sortedGcal.filter(ev=>ev.start.getMinutes()>nowM);
+      const pastTasks=sortedTasks.filter(t=>parseInt((t.deadlineTime||`${h}:00`).split(':')[1],10)<=nowM);
+      const futureTasks=sortedTasks.filter(t=>parseInt((t.deadlineTime||`${h}:00`).split(':')[1],10)>nowM);
+      const nowLine=`<div class="tl-now-line"><span class="tl-now-line-time">${nowHM}</span><span class="tl-now-line-bar"></span></div>`;
+      bodyHtml=`<span class="tl-slot-line"></span>
+        ${pastGcal.length?`<div class="tl-slot-cards">${pastGcal.map(gcalCard).join('')}</div>`:''}
+        ${pastTasks.length?`<div class="tl-slot-cards">${pastTasks.map(gtdCard).join('')}</div>`:''}
+        ${nowLine}
+        ${futureGcal.length?`<div class="tl-slot-cards">${futureGcal.map(gcalCard).join('')}</div>`:''}
+        ${futureTasks.length?`<div class="tl-slot-cards">${futureTasks.map(gtdCard).join('')}</div>`:''}`;
+    } else {
+      bodyHtml=`<span class="tl-slot-line"></span>
+        ${gcalItems.length?`<div class="tl-slot-cards">${gcalItems.map(gcalCard).join('')}</div>`:''}
+        ${items.length?`<div class="tl-slot-cards">${[...items].sort((a,b)=>(a.deadlineTime||'').localeCompare(b.deadlineTime||'')).map(gtdCard).join('')}</div>`:''}`;
+    }
     return `<div class="tl-slot${isNow?' tl-now':''}" data-hour="${h}">
       <div class="tl-slot-time">${timeLabel}</div>
-      <div class="tl-slot-body">
-        <span class="tl-slot-line"></span>
-        ${gcalItems.length?`<div class="tl-slot-cards">${gcalItems.map(gcalCard).join('')}</div>`:''}
-        ${items.length?`<div class="tl-slot-cards">${[...items].sort((a,b)=>(a.deadlineTime||'').localeCompare(b.deadlineTime||'')).map(gtdCard).join('')}</div>`:''}
-      </div>
+      <div class="tl-slot-body">${bodyHtml}</div>
     </div>`;
   };
 
@@ -3519,8 +3539,8 @@ function startTimelineNowTimer(){
       if(isNow&&!wasNow){ el.classList.add('tl-now'); }
       if(!isNow&&wasNow){ el.classList.remove('tl-now'); }
       if(isNow){
-        const timeEl=el.querySelector('.tl-slot-time');
-        if(timeEl) timeEl.textContent=`${String(h).padStart(2,'0')}:${mm}`;
+        const nowTimeEl=el.querySelector('.tl-now-line-time');
+        if(nowTimeEl) nowTimeEl.textContent=`${String(h).padStart(2,'0')}:${mm}`;
       }
     });
   },60000);
