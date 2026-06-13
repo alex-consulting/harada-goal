@@ -1035,7 +1035,8 @@ async function fetchGcalEvents(){
   const allEvents=[];
   for(const url of gcalUrls){
     try{
-      const res=await fetch(WORKER_URL+'/ical-proxy',{headers:{'X-Sync-Code':getSyncCode(),'X-Ical-Url':url}});
+      const proxyUrl='https://corsproxy.io/?'+encodeURIComponent(url);
+      const res=await fetch(proxyUrl);
       if(!res.ok) continue;
       const text=await res.text();
       allEvents.push(...parseIcalEvents(text));
