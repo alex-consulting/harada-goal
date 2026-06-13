@@ -750,7 +750,7 @@ td.dsun .daybtn{border-color:rgba(255,59,48,.35)}td.dsat .daybtn{border-color:rg
       </div>
       <div id="gcalUrlList"></div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <input type="url" id="gcalUrlInput" placeholder="https://calendar.google.com/calendar/ical/..." style="flex:1;font-size:12px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--fill);color:var(--text)">
+        <input type="url" id="gcalUrlInput" placeholder="iCal URLをここに貼り付け" style="flex:1;font-size:12px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--fill);color:var(--text)">
         <button class="settings-btn" onclick="gcalAddUrl()" style="white-space:nowrap;flex:0 0 auto">追加</button>
       </div>
       <p class="settings-section">データ管理</p>
@@ -976,9 +976,15 @@ const APP_VERSION="3.0.0";
 const LS_KEY="haradaApp_v1";
 const SYNC_KEY="visgo_sync_v1";
 const WORKER_URL="https://visgo-sync.moriyamakoto.workers.dev";
-const GCAL_KEY="visgo_gcal_v1";
-let gcalUrls=JSON.parse(localStorage.getItem(GCAL_KEY)||'[]');
-function saveGcalUrls(){localStorage.setItem(GCAL_KEY,JSON.stringify(gcalUrls));}
+const GCAL_KEY="visgo_gcal_v1"; // migration only
+// D.gcalUrls が正規ストア（sync対象）。旧keyからマイグレーション
+let gcalUrls=(()=>{
+  if(Array.isArray(D.gcalUrls)&&D.gcalUrls.length) return D.gcalUrls;
+  const old=JSON.parse(localStorage.getItem(GCAL_KEY)||'[]');
+  if(old.length){ D.gcalUrls=old; localStorage.removeItem(GCAL_KEY); }
+  return D.gcalUrls||(D.gcalUrls=[]);
+})();
+function saveGcalUrls(){ D.gcalUrls=gcalUrls; save(); }
 
 /* ===== iCal パーサー ===== */
 function parseIcalDate(val,tzid){
@@ -1168,6 +1174,7 @@ function syncPush(){
 // リモートデータをD・IDB・localStorageに適用する共通処理
 async function _applyRemoteData(remote){
   Object.assign(D,remote);
+  if(Array.isArray(remote.gcalUrls)){ gcalUrls=remote.gcalUrls; D.gcalUrls=gcalUrls; }
   try{
     if(Array.isArray(remote.goalImages)) await idbSet("goalImages",remote.goalImages);
     const dreamImgs={};
